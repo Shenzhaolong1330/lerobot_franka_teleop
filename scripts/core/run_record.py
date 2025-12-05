@@ -50,7 +50,7 @@ class RecordConfig:
         
         # robot config
         self.robot_ip: str = robot["ip"]
-        self.gripper_port: str = robot["gripper_port"]
+        # self.gripper_port: str = robot["gripper_port"]
         self.use_gripper: str = robot["use_gripper"]
         self.close_threshold = robot["close_threshold"]
         self.gripper_reverse: str = robot["gripper_reverse"]
@@ -148,7 +148,7 @@ def run_record(record_cfg: RecordConfig):
         
         robot_config = FrankaConfig(
             robot_ip=record_cfg.robot_ip,
-            gripper_port=record_cfg.gripper_port,
+            # gripper_port=record_cfg.gripper_port,
             cameras = camera_config,
             debug = record_cfg.debug,
             close_threshold = record_cfg.close_threshold,

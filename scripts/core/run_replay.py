@@ -19,14 +19,14 @@ class ReplayConfig:
 
         # robot config
         self.robot_ip: str = robot["ip"]
-        self.gripper_port: str = robot["gripper_port"]
+        # self.gripper_port: str = robot["gripper_port"]
 
 def run_replay(replay_cfg: ReplayConfig):
     episode_idx = replay_cfg.episode_idx
 
     robot_config = FrankaConfig(
         robot_ip=replay_cfg.robot_ip,
-        gripper_port=replay_cfg.gripper_port,
+        # gripper_port=replay_cfg.gripper_port,
     )
 
     robot = robot = Franka(robot_config)
