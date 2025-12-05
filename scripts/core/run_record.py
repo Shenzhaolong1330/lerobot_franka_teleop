@@ -148,7 +148,6 @@ def run_record(record_cfg: RecordConfig):
         
         robot_config = FrankaConfig(
             robot_ip=record_cfg.robot_ip,
-            # gripper_port=record_cfg.gripper_port,
             cameras = camera_config,
             debug = record_cfg.debug,
             close_threshold = record_cfg.close_threshold,

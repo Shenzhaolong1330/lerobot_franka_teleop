@@ -79,10 +79,15 @@ class Franka(Robot):
             logger.info("\n===== [ROBOT] Connecting to Franka robot =====")
             robot = FrankaRobot(robot_ip)
             # robot.relative_dynamics_factor = 0.2
-            robot.relative_dynamics_factor = RelativeDynamicsFactor(1, 0.15, 0.05)
-            robot.joint_velocity_limit.set([2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1])
-            robot.joint_acceleration_limit.set([5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0])
-            robot.joint_jerk_limit.set([3750, 3750, 3750, 3750, 3750, 3750, 3750])
+            # robot.relative_dynamics_factor = RelativeDynamicsFactor(1, 0.10, 0.10)
+            # robot.joint_velocity_limit.set([2.1, 2.1, 2.1, 2.1, 2.1, 2.1, 2.1])
+            # robot.joint_acceleration_limit.set([5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0])
+            # robot.joint_jerk_limit.set([3750, 3750, 3750, 3750, 3750, 3750, 3750])
+            
+            robot.relative_dynamics_factor = RelativeDynamicsFactor(0.3, 0.05, 0.05)  # reduce dynamics aggressiveness
+            robot.joint_velocity_limit.set([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+            robot.joint_acceleration_limit.set([3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0])
+            robot.joint_jerk_limit.set([1200, 1200, 1200, 1200, 1200, 1200, 1200])
             joint_positions = robot.current_joint_state.position
             if joint_positions is not None and len(joint_positions) == 7:
                 formatted_joints = [round(j, 4) for j in joint_positions]
@@ -118,6 +123,62 @@ class Franka(Robot):
 
             self._gripper_pos = gripper_pos
             time.sleep(0.01)
+
+    def _affine_to_xyzrpy(self, aff) -> tuple:
+        """
+        Robustly convert franky Affine-like object to (x,y,z,rx,ry,rz).
+        Avoids using boolean 'or' on numpy arrays and avoids indexing Affine directly.
+        """
+        # try sequence protocol
+        try:
+            seq = tuple(aff)
+            if len(seq) >= 6:
+                return tuple(float(v) for v in seq[:6])
+        except Exception:
+            pass
+
+        # direct scalar attributes
+        if all(hasattr(aff, a) for a in ("x", "y", "z")):
+            x = float(getattr(aff, "x"))
+            y = float(getattr(aff, "y"))
+            z = float(getattr(aff, "z"))
+            rx = float(getattr(aff, "rx", 0.0))
+            ry = float(getattr(aff, "ry", 0.0))
+            rz = float(getattr(aff, "rz", 0.0))
+            return (x, y, z, rx, ry, rz)
+
+        # safe lookup helper to avoid 'or' truth-evaluation issues
+        def _first_present(obj, names):
+            for n in names:
+                val = getattr(obj, n, None)
+                if val is not None:
+                    return val
+            return None
+
+        trans = _first_present(aff, ("translation", "t", "p", "position"))
+        rot = _first_present(aff, ("rotation", "orientation", "rpy", "euler"))
+
+        tx = ty = tz = 0.0
+        if trans is not None:
+            try:
+                seq = tuple(trans)
+                tx, ty, tz = (float(v) for v in seq[:3])
+            except Exception:
+                tx = float(getattr(trans, "x", getattr(trans, "tx", 0.0)))
+                ty = float(getattr(trans, "y", getattr(trans, "ty", 0.0)))
+                tz = float(getattr(trans, "z", getattr(trans, "tz", 0.0)))
+
+        rx = ry = rz = 0.0
+        if rot is not None:
+            try:
+                seq = tuple(rot)
+                rx, ry, rz = (float(v) for v in seq[:3])
+            except Exception:
+                rx = float(getattr(rot, "x", getattr(rot, "rx", 0.0)))
+                ry = float(getattr(rot, "y", getattr(rot, "ry", 0.0)))
+                rz = float(getattr(rot, "z", getattr(rot, "rz", 0.0)))
+
+        return (tx, ty, tz, rx, ry, rz)
 
     @property
     def _motors_ft(self) -> dict[str, type]:
@@ -203,8 +264,9 @@ class Franka(Robot):
             raise DeviceNotConnectedError(f"{self} is not connected.")
 
         joint_positions = [action[f"joint_{i+1}.pos"] for i in range(self._num_joints)]
-
-        print("action_joint_positions:", joint_positions)
+        
+        formatted_positions = [round(float(pos), 3) for pos in joint_positions]
+        # print("action:", formatted_positions, action["gripper_position"])
         if not self.config.debug:
             self._robot.move(JointMotion(joint_positions, ReferenceType.Absolute, return_when_finished=True), asynchronous=True)
 
@@ -218,46 +280,51 @@ class Franka(Robot):
         
         # Read joint positions
         joint_position = self._robot.current_joint_state.position
-        
+        # print("joint_position:", joint_position)
         # Read joint velocities
         joint_velocity = self._robot.current_joint_state.velocity
-
-        # # Read joint accelerations
-        # joint_acceleration = self._arm["rtde_r"].getTargetQdd()
-
-        # # Read joint forces
-        # joint_force = self._arm["rtde_c"].getJointTorques()
-
+        # print("joint_velocity:", joint_velocity)
         # Read ee pose
         cartesian_state = self._robot.current_cartesian_state
         robot_pose = cartesian_state.pose  # Contains end-effector pose and elbow position
         ee_pose = robot_pose.end_effector_pose
+        # print("ee_pose:", ee_pose)
+
 
         # Read ee speed
         robot_velocity = cartesian_state.velocity  # Contains end-effector twist and elbow velocity
         ee_speed = robot_velocity.end_effector_twist
-
-        # # Read tcp acceleration
-        # tcp_acceleration = self._arm["rtde_r"].getActualToolAccelerometer()
-
-        # # Read tcp force
-        # tcp_force = self._arm["rtde_r"].getActualTCPForce()
-
+        # print("ee_speed:", ee_speed)
+        
         # Prepare observation dictionary
         obs_dict = {}
-        print("joint_position:", joint_position)
         for i in range(len(joint_position)):
-            obs_dict[f"joint_{i+1}.pos"] = joint_position[i]
-            obs_dict[f"joint_{i+1}.vel"] = joint_velocity[i]
-        #     obs_dict[f"joint_{i+1}.acc"] = joint_acceleration[i]
-        #     obs_dict[f"joint_{i+1}.force"] = joint_force[i]
+            obs_dict[f"joint_{i+1}.pos"] = float(joint_position[i])
+            obs_dict[f"joint_{i+1}.vel"] = float(joint_velocity[i])
 
-        for i, axis in enumerate(["x", "y", "z","rx","ry","rz"]):
-            obs_dict[f"ee_pose.{axis}"] = ee_pose[i]
-            obs_dict[f"ee_speed.{axis}"] = ee_speed[i]
-        #     if i < 3: # tcp_acceleration have only 3 axes
-        #         obs_dict[f"tcp_acc.{axis}"] = tcp_acceleration[i]
-        #     obs_dict[f"tcp_force.{axis}"] = tcp_force[i]
+        # use safe converter for Affine-like ee_pose
+        ee_vals = self._affine_to_xyzrpy(ee_pose)
+        for i, axis in enumerate(["x", "y", "z", "rx", "ry", "rz"]):
+            obs_dict[f"ee_pose.{axis}"] = float(ee_vals[i])
+
+        # safe read ee velocity -> use keys ee_vel.* to match _motors_ft
+        try:
+            speed_seq = tuple(ee_speed)
+            for i, axis in enumerate(["x", "y", "z", "rx", "ry", "rz"]):
+                obs_dict[f"ee_vel.{axis}"] = float(speed_seq[i])
+        except Exception:
+            sx = float(getattr(ee_speed, "x", getattr(ee_speed, "linear_x", 0.0)))
+            sy = float(getattr(ee_speed, "y", getattr(ee_speed, "linear_y", 0.0)))
+            sz = float(getattr(ee_speed, "z", getattr(ee_speed, "linear_z", 0.0)))
+            srx = float(getattr(ee_speed, "rx", getattr(ee_speed, "angular_x", 0.0)))
+            sry = float(getattr(ee_speed, "ry", getattr(ee_speed, "angular_y", 0.0)))
+            srz = float(getattr(ee_speed, "rz", getattr(ee_speed, "angular_z", 0.0)))
+            obs_dict["ee_vel.x"] = sx
+            obs_dict["ee_vel.y"] = sy
+            obs_dict["ee_vel.z"] = sz
+            obs_dict["ee_vel.rx"] = srx
+            obs_dict["ee_vel.ry"] = sry
+            obs_dict["ee_vel.rz"] = srz
 
         if self.config.use_gripper:
             obs_dict["gripper_raw_position"] = self._gripper_pos

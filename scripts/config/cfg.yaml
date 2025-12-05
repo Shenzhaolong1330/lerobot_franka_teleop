@@ -1,5 +1,5 @@
 record:
-  repo_id: &repo_id "scylearning/pick_greencube_into_trashbin" 
+  repo_id: &repo_id "shenzhaolong/test_replay_dataset" 
   # repo_id: &repo_id "scylearning/pick_greencube_into_trashbin" 
   # Suggested format: <hf_username>/<description>, description = task.description -> Verb_SourceObject_prep_TargetObject
   # e.g. Pick up the green cube and put it into the trash bin -> pick_greencube_into_trashbin
@@ -11,12 +11,13 @@ record:
     control_mode: "isoteleop"
     dynamixel_config:
       port: "/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0"
-      hardware_offsets: [0, 0, 0, 0, 0, 0, 0] # The Calibration offsets between the master and the slave robot
+      # hardware_offsets: [0, 0, 0, 0, 0, 0, 0] # The Calibration offsets between the master and the slave robot
+      hardware_offsets: [-0.12183455210997171, -0.002845966063342931, -0.06250428305273764, -2.0498354593763044, 0.05259129256457092, 1.9984585428810417, -0.9046528345737315] 
       use_gripper: &use_gripper True # whether the slave robot can use gripper
       joint_ids: [0, 1, 2, 3, 4, 5, 6]
-      joint_offsets: [1.571, 0.0, 0.0, 0.0, 0.0, 0, 0]
+      joint_offsets: [0.0, 3.142, 6.283, 4.712, 4.712, 6.283, 2.496]
       joint_signs: [1, 1, 1, 1, 1, -1, 1]
-      gripper_config: [7, 1.03083509, 1.93895172] # id, min, max
+      gripper_config: [7, 0.9664079, 1.9404857] # id, min, max
       
   robot:
     ip: &ip "172.16.0.2" # robot_ip
@@ -28,11 +29,11 @@ record:
 
   task:
     # description: "Pick up the green cube and put it into the trash bin." # task description
-    description: "Open the cabinet, place the reagent bottle inside, and close the cabinet." # task description
+    description: "test by shenzhaolong" # task description
     num_episodes: 100 # number of episodes to record
     display: True # Whether to display the data during recording
-    resume: False
-    resume_dataset: scylearning/open_cabinet_place_reagent_bottle_inside_close_cabinet_20251119_v01 # dataset to resume from if resume is True
+    resume: False # whether to resume from an existing dataset
+    resume_dataset: shenzhaolong/test_dataset_20251205_v02 # dataset to resume from if resume is True
 
   time:
     episode_time_sec: 6000 # max time per episode in seconds
@@ -41,7 +42,7 @@ record:
 
   cameras:
     wrist_cam_serial: "339322074423" # wrist camera serial number
-    exterior_cam_serial: "243322071821" # exterior camera serial number
+    exterior_cam_serial: "344322074412" # exterior camera serial number
     width: 424 # 640 424
     height: 240 # 360 240
 
@@ -49,12 +50,12 @@ record:
     push_to_hub: False # whether to push the dataset to your huggingface repo after recording
 
 replay:
-  dataset_name: scylearning/pick_greencube_into_trashbin_20251102_v01
+  dataset_name: shenzhaolong/test_replay_dataset_20251205_v04
   episode_idx: 0 # episode index to replay
   robot:
     ip: *ip
     # gripper_port: *gripper_port
 
 visualize:
-  dataset_name: scylearning/pour_water_into_beaker_20251117_v01
-  episode_index: 52 # episode index to visualize
+  dataset_name: shenzhaolong/test_replay_dataset_20251205_v04
+  episode_index: 0 # episode index to visualize

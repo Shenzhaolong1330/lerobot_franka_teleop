@@ -36,7 +36,6 @@ def run_replay(replay_cfg: ReplayConfig):
     log_say(f"Replaying episode {episode_idx}")
     for idx in range(dataset.num_frames):
         t0 = time.perf_counter()
-
         action = {
             name: float(actions[idx]["action"][i]) for i, name in enumerate(dataset.features["action"]["names"])
         }
