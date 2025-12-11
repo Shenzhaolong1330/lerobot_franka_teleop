@@ -3,9 +3,7 @@ from typing import Dict, Any, List
 import yaml
 import numpy as np
 import logging
-
-from pylibfranka import Robot as FrankaRobot
-from pylibfranka import ControllerMode
+from lerobot_robot_franka import FrankaInterfaceClient
 from lerobot_teleoperator_franka.dynamixel import DynamixelDriver
 
 # ------------------------ Logging Setup ------------------------ #
@@ -17,10 +15,9 @@ def get_start_joints(cfg) -> List[float]:
     """Connects to the Franka robot and retrieves current joint positions."""
     try:
         logger.info("\n===== [ROBOT] Connecting to Franka robot =====")
-        robot = FrankaRobot(cfg.robot_ip)
-        robot_control = robot.start_joint_position_control(ControllerMode.JointImpedance)
-        robot_state, duration = robot_control.readOnce()
-        joint_positions = robot_state.q
+        robot = FrankaInterfaceClient(cfg.robot_ip)
+        robot.robot_start_joint_impedance_control()
+        joint_positions = (robot.robot_get_joint_positions()).tolist()
         logger.info(f"[ROBOT] Current joint positions: {joint_positions}")
         logger.info("===== [ROBOT] Franka connected successfully =====\n")
         return joint_positions
@@ -90,7 +87,7 @@ class RecordConfig:
 def run(record_cfg):
     start_joints = get_start_joints(record_cfg)
     print(start_joints)
-    if start_joints.any():
+    if start_joints:
         return compute_joint_offsets(record_cfg, start_joints)
     else:
         raise RuntimeError("Failed to retrieve start joints from Franka robot.")

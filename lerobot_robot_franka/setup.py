@@ -10,6 +10,7 @@ setup(
     install_requires=[
         "pyrealsense2",
         "scipy",
+        "zerorpc",
     ],
     python_requires=">=3.10",
     classifiers=[

@@ -8,9 +8,7 @@ from lerobot.robots.robot import Robot
 from .config_franka import FrankaConfig
 from typing import Any, Dict
 import yaml
-from pylibfranka import Robot as FrankaRobot
-from pylibfranka import Gripper as FrankaGripper
-from pylibfranka import ControllerMode, JointPositions
+from .franka_interface_client import FrankaInterfaceClient
 from scipy.spatial.transform import Rotation as R
 import numpy as np
 from lerobot.cameras.configs import ColorMode, Cv2Rotation
@@ -28,8 +26,8 @@ class Franka(Robot):
 
         self.config = config
         self._is_connected = False
-        self._robot_control = None
-        self._gripper = None
+        self._robot = None
+        # self._gripper = None
         self._initial_pose = None
         self._prev_observation = None
         self._num_joints = 7
@@ -37,6 +35,7 @@ class Franka(Robot):
         self._gripper_speed = 0.2
         self._gripper_epsilon = 1.0
         self._gripper_position = 1
+        self._gripper_pos = None
         self._dt = 0.002
         self._last_gripper_position = 1
         
@@ -45,14 +44,13 @@ class Franka(Robot):
             raise DeviceAlreadyConnectedError(f"{self.name} is already connected.")
 
         # Connect to robot
-        self._robot_control = self._check_franka_connection(self.config.robot_ip)
+        self._robot = self._check_franka_connection(self.config.robot_ip)
         
         # Initialize gripper
         if self.config.use_gripper:
             self._gripper = self._check_gripper_connection(self.config.robot_ip)
+            # self._start_gripper_state_reader()
 
-            # Start gripper state reader
-            self._start_gripper_state_reader()
 
         # Connect cameras
         logger.info("\n===== [CAM] Initializing Cameras =====")
@@ -67,34 +65,21 @@ class Franka(Robot):
 
     def _check_gripper_connection(self, robot_ip: str):
         logger.info("\n===== [GRIPPER] Initializing gripper...")
-        gripper = FrankaGripper(robot_ip)
+        self._robot.gripper_initialize()
         print("Homing gripper")
-        gripper.homing()
+        self._robot.gripper_goto(width=self.config.gripper_max_open, speed=self._gripper_speed, force=self._gripper_force, blocking=True)
         logger.info("===== [GRIPPER] Gripper initialized successfully.\n")
-        return gripper
+        return None
 
 
     def _check_franka_connection(self, robot_ip: str):
         try:
             logger.info("\n===== [ROBOT] Connecting to Franka robot =====")
-            robot = FrankaRobot(robot_ip)
+            
+            franka = FrankaInterfaceClient()
+            franka.robot_start_joint_impedance_control()
 
-            lower_torque_thresholds = [20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0]
-            upper_torque_thresholds = [20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0]
-            lower_force_thresholds = [20.0, 20.0, 20.0, 25.0, 25.0, 25.0]
-            upper_force_thresholds = [20.0, 20.0, 20.0, 25.0, 25.0, 25.0]
-
-            robot.set_collision_behavior(
-                lower_torque_thresholds,
-                upper_torque_thresholds,
-                lower_force_thresholds,
-                upper_force_thresholds,
-            )
-
-            robot_control = robot.start_joint_position_control(ControllerMode.JointImpedance)
-            robot_state, duration = robot_control.readOnce()
-
-            joint_positions = robot_state.q
+            joint_positions = franka.robot_get_joint_positions()
             if joint_positions is not None and len(joint_positions) == 7:
                 formatted_joints = [round(j, 4) for j in joint_positions]
                 logger.info(f"[ROBOT] Current joint positions: {formatted_joints}")
@@ -106,7 +91,7 @@ class Franka(Robot):
             logger.info("===== [ERROR] Failed to connect to Franka robot =====")
             logger.info(f"Exception: {e}\n")
 
-        return robot_control
+        return franka
 
     def _start_gripper_state_reader(self):
         threading.Thread(target=self._read_gripper_state, daemon=True).start()
@@ -119,11 +104,11 @@ class Franka(Robot):
                 gripper_position = 1 - gripper_position
 
             if gripper_position != self._last_gripper_position:
-                self._gripper.grasp(width = gripper_position, speed=self._gripper_speed, force = self._gripper_force, epsilon_outer=self._gripper_epsilon)
+                self._robot.gripper_grasp(width = gripper_position*self.config.gripper_max_open, speed=self._gripper_speed, force = self._gripper_force, epsilon_outer=self._gripper_epsilon)
                 self._last_gripper_position = gripper_position
             
-            gripper_state = self._gripper.read_once()
-            gripper_pos = gripper_state.width
+            gripper_state = self._robot.gripper_get_state()
+            gripper_pos = gripper_state["width"]/self.config.gripper_max_open
             if self.config.gripper_reverse:
                 gripper_pos = 1 - gripper_pos
 
@@ -144,7 +129,7 @@ class Franka(Robot):
             "joint_7.pos": float,
             # gripper state
             "gripper_raw_position": float, # raw position in [0,1]
-            "gripper_raw_bin": float, # raw position bin (0 or 1)
+            # "gripper_raw_bin": float, # raw position bin (0 or 1)
             "gripper_action_bin": float, # action command bin (0 or 1)
             # joint velocities
             "joint_1.vel": float,
@@ -177,13 +162,13 @@ class Franka(Robot):
             "ee_pose.rx": float,
             "ee_pose.ry": float,
             "ee_pose.rz": float,
-            # end effector velocity
-            "ee_vel.x": float,
-            "ee_vel.y": float,
-            "ee_vel.z": float,
-            "ee_vel.rx": float,
-            "ee_vel.ry": float,
-            "ee_vel.rz": float,
+            # # end effector velocity
+            # "ee_vel.x": float,
+            # "ee_vel.y": float,
+            # "ee_vel.z": float,
+            # "ee_vel.rx": float,
+            # "ee_vel.ry": float,
+            # "ee_vel.rz": float,
             # # end effector acceleration
             # "ee_acc.x": float,
             # "ee_acc.y": float,
@@ -215,65 +200,71 @@ class Franka(Robot):
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
 
-        joint_positions = [action[f"joint_{i+1}.pos"] for i in range(self._num_joints)]
+        target_joints = np.array([action[f"joint_{i+1}.pos"] for i in range(self._num_joints)])
+        # print("target_joints:", target_joints)
         
         if not self.config.debug:
             # 获取当前关节位置
-            robot_state, duration = self._robot_control.readOnce()
-            curr_joints = np.array(robot_state.q)
-            target_joints = np.array(joint_positions)
+            joint_positions = self._robot.robot_get_joint_positions()
+            # print("joint_positions:", joint_positions)
             
             # 计算最大关节位置差
-            max_delta = (np.abs(curr_joints - target_joints)).max()
+            max_delta = (np.abs(joint_positions - target_joints)).max()
             
             # 如果最大差值超过阈值，则进行插值移动
             if max_delta > 0.1:  # 设置一个合理的阈值
+                print("move too far, interpolate")
                 steps = min(int(max_delta / 0.01), 100)
                 
                 # 在当前位置和目标位置之间进行插值移动
-                for i, jnt in enumerate(np.linspace(curr_joints, target_joints, steps)):
-                    # 发送插值动作
-                    joint_positions_obj = JointPositions(jnt.tolist())
-                    # 设置motion_finished标志
-                    if i == steps - 1:
-                        joint_positions_obj.motion_finished = True
-                    self._robot_control.writeOnce(joint_positions_obj)
-                    # 短暂延时
-                    time.sleep(0.001)
+                for i, jnt in enumerate(np.linspace(joint_positions, target_joints, steps)):
+                    self._robot.robot_update_desired_joint_positions(jnt)
             else:
                 # 直接发送目标位置
-                joint_positions_obj = JointPositions(target_joints.tolist())
-                joint_positions_obj.motion_finished = True
-                self._robot_control.writeOnce(joint_positions_obj)
+                self._robot.robot_update_desired_joint_positions(target_joints)
+            
+            # self._robot.robot_update_desired_joint_positions(joint_positions)
             
         if "gripper_position" in action:
             self._gripper_position = action["gripper_position"]
+            gripper_position = 0.0 if self._gripper_position  < self.config.close_threshold else 1.0
+            if self.config.gripper_reverse:
+                gripper_position = 1 - gripper_position
+
+            if gripper_position != self._last_gripper_position:
+                self._robot.gripper_goto(
+                    width = gripper_position*self.config.gripper_max_open, 
+                    speed=self._gripper_speed, 
+                    force = self._gripper_force, 
+                    # epsilon_outer=self._gripper_epsilon
+                )
+                self._last_gripper_position = gripper_position
+            
+            gripper_state = self._robot.gripper_get_state()
+            gripper_pos = gripper_state["width"]/self.config.gripper_max_open
+            if self.config.gripper_reverse:
+                gripper_pos = 1 - gripper_pos
+
+            self._gripper_pos = gripper_pos
+            # self._read_gripper_state()
         return action
 
     def get_observation(self) -> dict[str, Any]:
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
         
-        robot_state, duration = self._robot_control.readOnce()
         # Read joint positions
-        joint_position = robot_state.q_d
+        joint_position = self._robot.robot_get_joint_positions()
         # print("joint_position:", joint_position)
         # Read joint velocities
-        joint_velocity = robot_state.dq_d
+        joint_velocity = self._robot.robot_get_joint_velocities()
         # print("joint_velocity:", joint_velocity)
-        # Read ee pose
-        O_T_EE = robot_state.O_T_EE_d
-        # print("O_T_EE:", O_T_EE)
-        O_T_EE = np.array(O_T_EE).reshape(4, 4).T
-        position = O_T_EE[:3, 3]
-        rotation_matrix = O_T_EE[:3, :3]
-        r = R.from_matrix(rotation_matrix)
-        euler_angles = r.as_euler('xyz', degrees=True)
-        ee_pose = np.concatenate([position, euler_angles])
+        # Read end effector pose
+        ee_pose = self._robot.robot_get_ee_pose()
         # print("ee_pose:", ee_pose)
 
         # Read ee speed
-        ee_speed = robot_state.O_dP_EE_d
+        # ee_speed = robot_state.O_dP_EE_d
         # print("ee_speed:", ee_speed)
         
         # Prepare observation dictionary
@@ -285,17 +276,17 @@ class Franka(Robot):
         for i, axis in enumerate(["x", "y", "z", "rx", "ry", "rz"]):
             obs_dict[f"ee_pose.{axis}"] = float(ee_pose[i])
   
-        for i, axis in enumerate(["x", "y", "z", "rx", "ry", "rz"]):
-            obs_dict[f"ee_vel.{axis}"] = float(ee_speed[i])
+        # for i, axis in enumerate(["x", "y", "z", "rx", "ry", "rz"]):
+        #     obs_dict[f"ee_vel.{axis}"] = float(ee_speed[i])
 
         if self.config.use_gripper:
             obs_dict["gripper_raw_position"] = self._gripper_pos
             obs_dict["gripper_action_bin"] = self._last_gripper_position
-            obs_dict["gripper_raw_bin"] = 0 if self._gripper_pos <= self.config.gripper_bin_threshold else 1
+            # obs_dict["gripper_raw_bin"] = 0 if self._gripper_pos <= self.config.gripper_bin_threshold else 1
         else:
             obs_dict["gripper_raw_position"] = None
             obs_dict["gripper_action_bin"] = None
-            obs_dict["gripper_raw_bin"] = None
+            # obs_dict["gripper_raw_bin"] = None
 
         # Capture images from cameras
         for cam_key, cam in self.cameras.items():
