@@ -4,6 +4,37 @@
   <br>
 </p>
 
+## 0. Franka Control Instructions
+
+In this version, we use [Polymetis](https://polymetis-docs.github.io/) to control Franka. Since Polymetis does not support Python 3.10 and is recommended to run on NUC separately, we use Zerorpc for remote communication implementation. The specific process is as follows:
+
+### 0.1 Install [Polymetis](https://polymetis-docs.github.io/) on NUC
+
+We have open-sourced the optimized source code for Franka at [Polymetis](https://github.com/Shenzhaolong1330/fairo-franka/tree/main). For detailed installation instructions, please refer to [FRANKA.md](https://github.com/Shenzhaolong1330/fairo-franka/blob/main/polymetis/FRANKA.md).
+
+### 2. Start Server on NUC
+
+Start [launch_robot](https://github.com/Shenzhaolong1330/fairo-franka/blob/main/polymetis/polymetis/python/scripts/launch_robot.py), [launch_gripper](https://github.com/Shenzhaolong1330/fairo-franka/blob/main/polymetis/polymetis/python/scripts/launch_gripper.py), and [franka_interface_server](https://github.com/Shenzhaolong1330/fairo-franka/blob/main/polymetis/polymetis/python/polymetis/franka_interface_server.py) respectively.
+
+```
+# On the NUC
+python launch_robot.py robot_client=franka_hardware
+python launch_gripper.py gripper=franka_hand
+python franka_interface_server.py
+```
+
+### 3. Start [interface client](lerobot_robot_franka\lerobot_robot_franka\franka_interface_client.py) locally
+
+Before attempting to connect to Franka, start the [interface client](lerobot_robot_franka\lerobot_robot_franka\franka_interface_client.py).
+
+```
+# On the local machine
+python franka_interface_client.py
+```
+
+The functions in the [interface client](lerobot_robot_franka\lerobot_robot_franka\franka_interface_client.py) are basically the same as those in Polymetis. For usage, please refer to [Polymetis](https://polymetis-docs.github.io/).
+        
+
 ## 1. Environment Setup
 ### 1.1 Create and Activate Conda Environment
 ```bash
@@ -16,7 +47,9 @@ conda activate franka_data
 # Install specific version 0.3.4
 # git checkout da5d2f3e9187fa4690e6667fe8b294cae49016d6
 git clone https://github.com/huggingface/lerobot.git
-pip install -e lerobot
+cd lerobot
+git checkout da5d2f3e9187fa4690e6667fe8b294cae49016d6
+pip install -e .
 ```
 
 ### 1.3 Clone and Install Franka Teleoperation Control Source
@@ -208,16 +241,3 @@ lerobot-edit-dataset
 ```bash
 tools-check-dataset
 ```
-
-## 10. Franka Control Instructions
-
-This version uses [franky-control](https://github.com/TimSchneider42/franky?tab=readme-ov-file#installing-franky) for control. The default installed version is compatible with libfranka 0.16.0. If you are using a different version of libfranka, please install according to [franky-control](https://github.com/TimSchneider42/franky?tab=readme-ov-file#installing-franky).
-
-Additionally, in actual testing, franky-control may produce inconsistent speed/acceleration control errors under more aggressive teleoperation movements. Therefore, the relative dynamics coefficients are set relatively small:
-
-```
-robot.relative_dynamics_factor = RelativeDynamicsFactor(0.3, 0.05, 0.05)
-```
-
-In practical use, there will be a "lagging" issue with teleoperation. Future optimizations will consider using the latest [pylibfranka](https://frankarobotics.github.io/libfranka/pylibfranka/latest/) for implementation.
-        

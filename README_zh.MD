@@ -4,12 +4,33 @@
   <br>
 </p>
 
+## 0. Franka control说明
+在这个版本中，使用[Polymetis](https://polymetis-docs.github.io/)对Franka 进行控制，由于Polymetis不支持python3.10，并且推荐单独在NUC上运行，因此在这里用Zerorpc进行远程通信实现，具体流程如下：
+### 1. 在NUC上安装[Polymetis](https://polymetis-docs.github.io/)
+我们开源了针对franka优化后的[Polymetis](https://github.com/Shenzhaolong1330/fairo-franka/tree/main)源码，详细参考[安装教程](https://github.com/Shenzhaolong1330/fairo-franka/blob/main/polymetis/FRANKA.md)进行安装。
+### 2. 在NUC上启动Server
+分别启动[robot interface](https://github.com/Shenzhaolong1330/fairo-franka/blob/main/polymetis/polymetis/python/scripts/launch_robot.py)，[gripper interface](https://github.com/Shenzhaolong1330/fairo-franka/blob/main/polymetis/polymetis/python/scripts/launch_gripper.py)和[interface server](https://github.com/Shenzhaolong1330/fairo-franka/blob/main/polymetis/polymetis/python/polymetis/franka_interface_server.py)
+```
+# On the NUC
+python launch_robot.py robot_client=franka_hardware
+python launch_gripper.py gripper=franka_hand
+python franka_interface_server.py
+```
+### 3. 在本地启动[interface client](lerobot_robot_franka\lerobot_robot_franka\franka_interface_client.py)
+在尝试链接Franka前，启动[interface client](lerobot_robot_franka\lerobot_robot_franka\franka_interface_client.py)
+```
+# On the local machine
+python franka_interface_client.py
+```
+[interface client](lerobot_robot_franka\lerobot_robot_franka\franka_interface_client.py)中的函数功能与Polymetis中的函数功能基本一致，使用方法可以参考[Polymetis文档](https://polymetis-docs.github.io/)。
+
+
 ## 1. 环境配置
 
 ### 1.1 创建并激活 conda 环境
 ```bash
-conda create -n ur_data python=3.10
-conda activate ur_data
+conda create -n franka_data python=3.10
+conda activate franka_data
 ```
 
 ### 1.2 安装 lerobot
@@ -17,12 +38,14 @@ conda activate ur_data
 # 安装指定版本 0.3.4
 # git checkout da5d2f3e9187fa4690e6667fe8b294cae49016d6
 git clone https://github.com/huggingface/lerobot.git
-pip install -e lerobot
+cd lerobot
+git checkout da5d2f3e9187fa4690e6667fe8b294cae49016d6
+pip install -e .
 ```
 
 ### 1.3 克隆并安装 Franka 遥操作控制源码
 ```bash
-mkdir ur_data_collection && cd ur_data_collection
+mkdir franka_data_collection && cd franka_data_collection
 git clone https://github.com/Shenzhaolong1330/lerobot_franka_isoteleop.git
 cd lerobot_franka_isoteleop
 pip install -e .
@@ -203,16 +226,3 @@ lerobot-edit-dataset
 ```bash
 tools-check-dataset
 ```
-
-
-## 10. franka control说明
-在这个版本中使用[franky-control](https://github.com/TimSchneider42/franky?tab=readme-ov-file#installing-franky)
-进行控制，默认安装的版本兼容libfranka 0.16.0, 若使用其他版本libfranka, 请根据[franky-control](https://github.com/TimSchneider42/franky?tab=readme-ov-file#installing-franky)
-进行安装。
-
-另外实测franky-control 在较为激烈的遥操作动作下，会出现控制速度/加速度不连贯的报错，
-因此相对的动力学系数设置的比较小:
-```
-robot.relative_dynamics_factor = RelativeDynamicsFactor(0.3, 0.05, 0.05) 
-```
-在实际使用中，摇操作会有“不跟手”的情况，后续优化会考虑使用最新的[pylibfranka](https://frankarobotics.github.io/libfranka/pylibfranka/latest/)来进行实现。
