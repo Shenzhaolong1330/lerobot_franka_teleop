@@ -1,5 +1,5 @@
 '''
-run on the NUC connected to the franka robot
+running on the NUC connected to the franka robot
 to provide zerorpc server interface
 '''
 

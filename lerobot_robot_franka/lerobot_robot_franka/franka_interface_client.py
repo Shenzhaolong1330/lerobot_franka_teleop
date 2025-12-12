@@ -1,7 +1,6 @@
 '''
-run on the user machine 
+running on the user machine 
 to connect to the franka_interface_server 
-running on the NUC
 '''
 
 import numpy as np
