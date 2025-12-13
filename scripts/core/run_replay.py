@@ -28,6 +28,8 @@ def run_replay(replay_cfg: ReplayConfig):
         robot_ip=replay_cfg.robot_ip,
         # gripper_port=replay_cfg.gripper_port,
         debug = False,
+        gripper_reverse = False
+
     )
     
     robot = robot = Franka(robot_config)

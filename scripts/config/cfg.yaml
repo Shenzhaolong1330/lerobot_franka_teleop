@@ -1,5 +1,5 @@
 record:
-  repo_id: &repo_id "shenzhaolong/test_replay_dataset" 
+  repo_id: &repo_id "shenzhaolong/test_grasp" 
   # repo_id: &repo_id "scylearning/pick_greencube_into_trashbin" 
   # Suggested format: <hf_username>/<description>, description = task.description -> Verb_SourceObject_prep_TargetObject
   # e.g. Pick up the green cube and put it into the trash bin -> pick_greencube_into_trashbin
@@ -52,12 +52,12 @@ record:
     push_to_hub: False # whether to push the dataset to your huggingface repo after recording
 
 replay:
-  dataset_name: shenzhaolong/test_replay_dataset_20251213_v07
-  episode_idx: 1 # episode index to replay
+  dataset_name: shenzhaolong/test_grasp_20251213_v01
+  episode_idx: 0 # episode index to replay
   robot:
     ip: *ip
     # gripper_port: *gripper_port
 
 visualize:
-  dataset_name: shenzhaolong/test_replay_dataset_20251213_v07
+  dataset_name: shenzhaolong/test_grasp_20251213_v01
   episode_index: 0 # episode index to visualize
