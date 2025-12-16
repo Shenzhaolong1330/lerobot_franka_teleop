@@ -9,15 +9,24 @@ from polymetis import GripperInterface
 import scipy.spatial.transform as st
 import numpy as np
 import torch
+import logging
 
-
+log = logging.getLogger(__name__)
 class FrankaInterfaceServer:
     def __init__(self):
         # self.robot = RobotInterface(ip_address="172.16.0.2")
-        self.robot = RobotInterface(enforce_version=False)
+        try:
+            self.robot = RobotInterface(enforce_version=False)
+            log.info("Connected to robot")
+        except:
+            log.error("Failed to connect to robot")
         
     def gripper_initialize(self):
-        self.gripper = GripperInterface()
+        try:
+            self.gripper = GripperInterface()
+            log.info("Connected to gripper")
+        except:
+            log.error("Failed to connect to gripper")
 
     def gripper_goto(
         self, 

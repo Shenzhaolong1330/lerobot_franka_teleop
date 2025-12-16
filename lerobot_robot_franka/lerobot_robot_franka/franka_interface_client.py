@@ -2,18 +2,27 @@
 running on the user machine 
 to connect to the franka_interface_server 
 '''
-
+import logging
 import numpy as np
 import zerorpc
 
+log = logging.getLogger(__name__)
 
 class FrankaInterfaceClient:
-    def __init__(self, ip='192.168.100.63', port=4242):
-        self.server = zerorpc.Client(heartbeat=20)
-        self.server.connect(f"tcp://{ip}:{port}")
+    def __init__(self, ip='192.168.1.103', port=4242):
+        try:
+            self.server = zerorpc.Client(heartbeat=20)
+            self.server.connect(f"tcp://{ip}:{port}")
+            log.info("Connected to server")
+        except:
+            log.error("Failed to connect to server")
 
     def gripper_initialize(self):
-        self.server.gripper_initialize()
+        try:
+            self.server.gripper_initialize()
+            log.info("Connected to gripper")
+        except:
+            log.error("Failed to connect to gripper")
 
     def gripper_goto(
         self, 
@@ -159,7 +168,8 @@ if __name__ == "__main__":
     
     Franka = FrankaInterfaceClient()
     Franka.gripper_initialize()
-    Franka.gripper_goto(width=0.08, speed=0.1, force=10.0, epsilon_inner=0.0, epsilon_outer=0.0)
+    
+    Franka.gripper_goto(width=0.06, speed=0.1, force=10.0)
     gripper_state = Franka.gripper_get_state()
     print(f"Current gripper state: {gripper_state}")
     

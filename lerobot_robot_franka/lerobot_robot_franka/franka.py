@@ -214,7 +214,7 @@ class Franka(Robot):
             # 如果最大差值超过阈值，则进行插值移动
             if max_delta > 0.1:  # 设置一个合理的阈值
                 print("move too far, interpolate")
-                steps = min(int(max_delta / 0.01), 100)
+                steps = min(int(max_delta / 0.05), 100)
                 
                 # 在当前位置和目标位置之间进行插值移动
                 for i, jnt in enumerate(np.linspace(joint_positions, target_joints, steps)):
