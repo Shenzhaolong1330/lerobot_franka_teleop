@@ -9,7 +9,7 @@ import zerorpc
 log = logging.getLogger(__name__)
 
 class FrankaInterfaceClient:
-    def __init__(self, ip='192.168.1.103', port=4242):
+    def __init__(self, ip='192.168.1.104', port=4242):
         try:
             self.server = zerorpc.Client(heartbeat=20)
             self.server.connect(f"tcp://{ip}:{port}")

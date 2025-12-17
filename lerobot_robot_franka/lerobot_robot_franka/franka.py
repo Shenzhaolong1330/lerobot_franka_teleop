@@ -76,7 +76,7 @@ class Franka(Robot):
         try:
             logger.info("\n===== [ROBOT] Connecting to Franka robot =====")
             
-            franka = FrankaInterfaceClient()
+            franka = FrankaInterfaceClient(ip=robot_ip, port=4242)
             franka.robot_start_joint_impedance_control()
 
             joint_positions = franka.robot_get_joint_positions()

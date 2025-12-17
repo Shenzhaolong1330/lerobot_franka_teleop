@@ -21,7 +21,7 @@ record:
       
   robot:
     # ip: &ip "172.16.0.2" # robot ip
-    ip: &ip "192.168.1.103" # NUC ip
+    ip: &ip "192.168.1.104" # NUC ip
     use_gripper: *use_gripper
     close_threshold: 0.7 # threshold to determine gripper open/close
     gripper_bin_threshold: 0.98 # threshold to determine gripper is closed
