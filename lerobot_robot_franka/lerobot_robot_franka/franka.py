@@ -31,7 +31,7 @@ class Franka(Robot):
         self._initial_pose = None
         self._prev_observation = None
         self._num_joints = 7
-        self._gripper_force = 20
+        self._gripper_force = 70
         self._gripper_speed = 0.2
         self._gripper_epsilon = 1.0
         self._gripper_position = 1

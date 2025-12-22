@@ -15,7 +15,7 @@ def get_start_joints(cfg) -> List[float]:
     """Connects to the Franka robot and retrieves current joint positions."""
     try:
         logger.info("\n===== [ROBOT] Connecting to Franka robot =====")
-        robot = FrankaInterfaceClient(ip=cfg.robot.ip, port=4242)
+        robot = FrankaInterfaceClient(ip=cfg.robot_ip, port=4242)
         robot.robot_start_joint_impedance_control()
         joint_positions = (robot.robot_get_joint_positions()).tolist()
         logger.info(f"[ROBOT] Current joint positions: {joint_positions}")

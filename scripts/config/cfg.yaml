@@ -15,7 +15,7 @@ record:
       hardware_offsets: [-0.12183455210997171, -0.002845966063342931, -0.06250428305273764, -2.0498354593763044, 0.05259129256457092, 1.9984585428810417, -0.9046528345737315] 
       use_gripper: &use_gripper True # whether the slave robot can use gripper
       joint_ids: [0, 1, 2, 3, 4, 5, 6]
-      joint_offsets: [6.283, 3.142, 0.0, 4.712, 4.712, 6.283, 2.496]
+      joint_offsets: [6.283, 3.142, 6.283, 4.712, 4.712, 6.283, 2.496]
       joint_signs: [1, 1, 1, 1, 1, -1, 1]
       gripper_config: [7, 0.9664079, 1.9404857] # id, min, max
       
