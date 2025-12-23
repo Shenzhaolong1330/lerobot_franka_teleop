@@ -243,7 +243,7 @@ class Franka(Robot):
                 self._last_gripper_position = gripper_position
             
             gripper_state = self._robot.gripper_get_state()
-            gripper_pos = gripper_state["width"]/self.config.gripper_max_open
+            gripper_pos = max(0.0, min(1.0, gripper_state["width"]/self.config.gripper_max_open))
             if self.config.gripper_reverse:
                 gripper_pos = 1 - gripper_pos
 
