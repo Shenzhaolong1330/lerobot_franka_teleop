@@ -6,7 +6,7 @@ record:
   debug: 0 # if True, robot will not execute any actions, but gripper can still be controlled
   user_notes:  # any additional notes about the dataset
   fps: 15 # dataset and camera frame rate
-  control_mode: &control_mode "spacemouse" # "isoteleop" or "spacemouse"
+  control_mode: &control_mode "isoteleop" # "isoteleop" or "spacemouse"
 
   teleop:
     control_mode: *control_mode 
