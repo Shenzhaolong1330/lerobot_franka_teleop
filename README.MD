@@ -1,18 +1,20 @@
-# Franka Master-Slave Teleoperation Data Collection
+# Franka Teleoperation Data Collection with Isomorphic Mapping and SpaceMouse
 
 <p align="center">
   <img src="assets/robot.png" alt="Record" width="600">
   <br>
 </p>
 
-## COMING SOON
+## New Support
 
-There will be an update to this project that adapts to the end pose control using [SpaceMouse](https://3dconnexion.com/) devices soon.
+Now we support the end pose control using [SpaceMouse](https://3dconnexion.com/) devices.
 
 <p align="center">
   <img src="assets/spacemouse.png" alt="Record" width="600">
   <br>
 </p>
+
+ The SpaceMouse is a 6-axis input device that can be used to control the end pose of the robot. The left button is used to open the gripper, and the right button is used to close the gripper.
 
 ## 0. Franka Control Instructions
 
