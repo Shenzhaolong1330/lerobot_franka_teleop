@@ -1,12 +1,12 @@
 record:
-  repo_id: &repo_id "shenzhaolong/pick_cube_into_box" 
+  repo_id: &repo_id "physbrain/jingziqi-blue-6" 
   # repo_id: &repo_id "scylearning/pick_greencube_into_trashbin" 
   # Suggested format: <hf_username>/<description>, description = task.description -> Verb_SourceObject_prep_TargetObject
   # e.g. Pick up the green cube and put it into the trash bin -> pick_greencube_into_trashbin
   debug: 0 # if True, robot will not execute any actions, but gripper can still be controlled
   user_notes:  # any additional notes about the dataset
   fps: 15 # dataset and camera frame rate
-  control_mode: &control_mode "isoteleop" # "isoteleop" or "spacemouse"
+  control_mode: &control_mode "spacemouse" # "isoteleop" or "spacemouse"
 
   teleop:
     control_mode: *control_mode 
@@ -37,11 +37,11 @@ record:
 
   task:
     # description: "Pick up the green cube and put it into the trash bin." # task description
-    description: "pick the white cube and put it into the brown box" # task description
-    num_episodes: 50 # number of episodes to record
+    description: "put the blue block into the 6th cell" # task description
+    num_episodes: 2 # number of episodes to record
     display: True # Whether to display the data during recording
     resume: False # whether to resume from an existing dataset
-    resume_dataset: physbrain/pick_cube_into_box_20251222_v01 # dataset to resume from if resume is True
+    resume_dataset: physbrain/jingziqi-red-5_20251229_v01 # dataset to resume from if resume is True
 
   time:
     episode_time_sec: 6000 # max time per episode in seconds
@@ -58,12 +58,12 @@ record:
     push_to_hub: False # whether to push the dataset to your huggingface repo after recording
 
 replay:
-  dataset_name: shenzhaolong/pick_cube_into_box_20251222_v01
-  episode_idx: 19 # episode index to replay
+  dataset_name: physbrain/jingziqi-red-8_20251229_v01
+  episode_idx: 5 # episode index to replay
   robot:
     ip: *ip
     # gripper_port: *gripper_port
 
 visualize:
-  dataset_name: shenzhaolong/pick_cube_into_box_20251222_v01
+  dataset_name: /home/deepcybo/.cache/huggingface/lerobot/physbrain/pick_cube_into_box_20251222_v01
   episode_index: 19 # episode index to visualize

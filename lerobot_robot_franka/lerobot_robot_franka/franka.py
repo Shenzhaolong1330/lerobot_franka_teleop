@@ -199,7 +199,7 @@ class Franka(Robot):
                 max_delta = (np.abs(joint_positions - target_joints)).max()
                 
                 # 如果最大差值超过阈值，则进行插值移动
-                if max_delta > 0.2:  # 设置一个合理的阈值
+                if max_delta > 0.6:  # 设置一个合理的阈值
                     print("MOVING TOO FAST! SLWO DOWN!")
                     steps = min(int(max_delta / 0.02), 100)
                     
