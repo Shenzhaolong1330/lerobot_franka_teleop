@@ -9,7 +9,7 @@ import zerorpc
 log = logging.getLogger(__name__)
 
 class FrankaInterfaceClient:
-    def __init__(self, ip='192.168.1.104', port=4242):
+    def __init__(self, ip='192.168.1.109', port=4242):
         try:
             self.server = zerorpc.Client(heartbeat=20)
             self.server.connect(f"tcp://{ip}:{port}")
@@ -166,7 +166,7 @@ class FrankaInterfaceClient:
 
 if __name__ == "__main__":
     
-    Franka = FrankaInterfaceClient()
+    Franka = FrankaInterfaceClient(ip="192.168.1.109")
     Franka.gripper_initialize()
     
     Franka.gripper_goto(width=0.06, speed=0.1, force=10.0)
