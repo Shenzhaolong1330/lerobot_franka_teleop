@@ -91,6 +91,16 @@ class Franka(Robot):
         return franka
 
 
+    def reset(self) -> None:
+        if not self.is_connected:
+            raise DeviceNotConnectedError(f"{self.name} is not connected.")
+
+        # Reset robot
+        self._robot.robot_go_home()
+        self._robot.gripper_goto(width=self.config.gripper_max_open, speed=self._gripper_speed, force=self._gripper_force, blocking=True)
+        logger.info("===== [ROBOT] Robot reset successfully =====\n")
+
+
     @property
     def _motors_ft(self) -> dict[str, type]:
         return {

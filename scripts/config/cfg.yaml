@@ -51,7 +51,7 @@ record:
 
   cameras:
     wrist_cam_serial: "344322074412" # wrist camera serial number
-    exterior_cam_serial: "243322071821" # exterior camera serial number
+    exterior_cam_serial: "339322074423" # exterior camera serial number 243322071821 339322074423
     width: 424 # 640 424
     height: 240 # 360 240
 

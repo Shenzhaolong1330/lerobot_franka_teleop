@@ -25,6 +25,7 @@ setup(
             "franka-record = scripts.core.run_record:main",
             "franka-replay = scripts.core.run_replay:main",
             "franka-visualize = scripts.core.run_visualize:main",
+            "franka-reset = scripts.core.reset_robot:main",
             # utils commands (data utilities)
             "utils-joint-offsets = scripts.utils.teleop_joint_offsets:main",
 
