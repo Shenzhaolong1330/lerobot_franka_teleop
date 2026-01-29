@@ -20,9 +20,12 @@ from .dynamixel.dynamixel_robot import DynamixelRobot
 from .spacemouse.spacemouse_robot import SpaceMouseRobot
 from typing import Any, Dict
 import yaml
+import placo
 from lerobot.utils.errors import DeviceNotConnectedError
 from lerobot.teleoperators.teleoperator import Teleoperator
 from .config_teleop import FrankaTeleopConfig
+from placo_utils.visualization import frame_viz, robot_frame_viz, robot_viz
+from lerobot_robot_franka.franka_interface_client import FrankaInterfaceClient
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
 class FrankaTeleop(Teleoperator):
@@ -38,6 +41,7 @@ class FrankaTeleop(Teleoperator):
         self.cfg = config
         self._is_connected = False
         self.name = "unnamed"
+        # self.robot_urdf_path = Path(__file__).parents[2] / self.cfg.robot_urdf_path
         if config.control_mode == "isoteleop":
             self.name = "IsoTeleop"
         elif config.control_mode == "spacemouse":
@@ -71,6 +75,16 @@ class FrankaTeleop(Teleoperator):
             self._check_spacemouse_connection()
             self._is_connected = True
 
+        # # Check Placo Setup
+        # self._check_placo_setup()
+        
+        # # Initialize qpos targets
+        # self._init_qpos()
+
+        # # Connect to visualize Placo
+        # if self.cfg.visualize_placo:
+        #     self._start_placo_visualizer()
+
         logger.info(f"[INFO] {self.name} env initialization completed successfully.\n")
 
     def _check_dynamixel_connection(self) -> None:
@@ -102,6 +116,26 @@ class FrankaTeleop(Teleoperator):
         logger.info(f"[TELEOP] Current ee pose actions: {formatted_actions}")
         logger.info("===== [TELEOP] Spacemouse connected successfully. =====\n")
 
+    # def _check_placo_setup(self):
+    #     # Placo Setup
+    #     self.placo_robot = placo.RobotWrapper(str(self.robot_urdf_path))
+    #     self.solver = placo.KinematicsSolver(self.placo_robot)
+    #     self.solver.dt = self.cfg.placo_dt
+    #     self.solver.mask_fbase(True)
+    #     self.solver.add_kinetic_energy_regularization_task(1e-6)
+
+    # def _init_qpos(self):
+    #     qpos_init = np.array(self._arm["left_rtde_r"].getActualQ())
+
+    #     self.placo_robot.state.q[7:13] = left_qpos_init
+    #     self.placo_robot.state.q[13:19] = right_qpos_init
+
+    #     self.target_left_q = left_qpos_init.copy()
+    #     self.target_right_q = right_qpos_init.copy()
+    #     self.left_gripper_pos = self.cfg.open_position
+    #     self.right_gripper_pos = self.cfg.open_position
+
+
     def calibrate(self) -> None:
         pass
 
@@ -113,7 +147,8 @@ class FrankaTeleop(Teleoperator):
             return self.dynamixel_robot.get_observations()
         elif self.cfg.control_mode == "spacemouse":
             return self.spacemouse_robot.get_observations()
-
+# TODO: spacemouse get absolute pose
+# TODO: transfer absolute pose to absolute joint positions via IK
     def send_feedback(self, feedback: dict[str, Any]) -> None:
         pass
 

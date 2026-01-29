@@ -118,6 +118,7 @@ def handle_incomplete_dataset(dataset_path):
             print("====== [KEEP] Incomplete dataset folder retained, please check manually. ======")
 
 def run_record(record_cfg: RecordConfig):
+    print("====== [START] Starting recording ======")
     try:
         dataset_name, data_version = generate_dataset_name(record_cfg)
 
@@ -296,3 +297,6 @@ def main():
 
     record_cfg = RecordConfig(cfg["record"])
     run_record(record_cfg)
+
+if __name__ == "__main__":
+    main()

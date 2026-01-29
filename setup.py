@@ -12,6 +12,7 @@ setup(
     packages=find_packages(where=".", include=["scripts*", "scripts.*"]),
     include_package_data=True,
     install_requires=[
+        "send2trash",
         f"lerobot_robot_franka @ file:///{ROOT}/lerobot_robot_franka",
         f"lerobot_teleoperator_franka @ file:///{ROOT}/lerobot_teleoperator_franka"
     ],

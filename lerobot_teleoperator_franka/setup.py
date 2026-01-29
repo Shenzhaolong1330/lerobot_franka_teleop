@@ -10,7 +10,8 @@ setup(
     python_requires=">=3.10",
     install_requires=[
         "dynamixel_sdk",
-        "easyhid"
+        "easyhid",
+        "placo"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

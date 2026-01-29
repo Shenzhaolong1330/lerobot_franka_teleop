@@ -16,3 +16,6 @@ class FrankaTeleopConfig(TeleoperatorConfig):
     pose_scaler: List[float] = field(default_factory=lambda: [1.0, 1.0])
     channel_signs: List[bool] = field(default_factory=lambda: [1, 1, 1, 1, 1, 1])
     control_mode: str = "isoteleop"
+    # placo
+    # visualize_placo: bool = False
+    # placo_dt: float = 0.01

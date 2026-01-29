@@ -1,12 +1,12 @@
 record:
-  repo_id: &repo_id "physbrain4/pick_and_place_from_cluster" 
+  repo_id: &repo_id "physbrain100/pick_and_place_from_cluster" 
   # repo_id: &repo_id "scylearning/pick_greencube_into_trashb
   # Suggested format: <hf_username>/<description>, description = task.description -> Verb_SourceObject_prep_TargetObject
   # e.g. Pick up the green cube and put it into the trash bin -> pick_greencube_into_trashbin
   debug: 0 # if True, robot will not execute any actions, but gripper can still be controlled
   user_notes:  # any additional notes about the dataset
   fps: 15 # dataset and camera frame rate
-  control_mode: &control_mode "spacemouse" # "isoteleop" or "spacemouse"
+  control_mode: &control_mode "isoteleop" # "isoteleop" or "spacemouse"
 
   teleop:
     control_mode: *control_mode 
@@ -16,7 +16,7 @@ record:
       hardware_offsets: [-0.12183455210997171, -0.002845966063342931, -0.06250428305273764, -2.0498354593763044, 0.05259129256457092, 1.9984585428810417, -0.9046528345737315] 
       use_gripper: &use_gripper True # whether the slave robot can use gripper
       joint_ids: [0, 1, 2, 3, 4, 5, 6]
-      joint_offsets: [6.283, 3.142, 6.283, 4.712, 4.712, 6.283, 2.496]
+      joint_offsets: [6.283, 3.142, 0.0, 4.712, 4.712, 6.283, 2.496]
       joint_signs: [1, 1, 1, 1, 1, -1, 1]
       gripper_config: [7, 0.9664079, 1.9404857] # id, min, max
     spacemouse_config:
@@ -24,6 +24,10 @@ record:
       channel_signs: [-1, -1, 1, -1, -1, 1]
       use_gripper: *use_gripper # whether the spacemouse robot can use gripper
       pose_scaler: [0.03, 0.15] # scaler for spacemouse actions [position, attitude]
+    placo:
+      visualize_placo: False
+      placo_dt: 0.01
+      robot_urdf_path: assets/franka_urdf/fr3v2_franka_hand.urdf
       
   robot:
     # ip: &ip "172.16.0.2" # robot ip
@@ -39,10 +43,10 @@ record:
   task:
     # description: "Pick up the green cube and put it into the trash bin." # task description
     description: "pick up the red block and put it into the gray box" # task description
-    num_episodes: 50 # number of episodes to record
+    num_episodes: 1 # number of episodes to record
     display: True # Whether to display the data during recording
-    resume: False # whether to resume from an existing dataset
-    resume_dataset: physbrain/jingziqi-red-5_20251229_v01 # dataset to resume from if resume is True
+    resume: false # whether to resume from an existing dataset
+    resume_dataset: physbrain6/pick_and_place_from_cluster_20260123_v01 # dataset to resume from if resume is True
 
   time:
     episode_time_sec: 6000 # max time per episode in seconds
@@ -51,7 +55,7 @@ record:
 
   cameras:
     wrist_cam_serial: "344322074412" # wrist camera serial number
-    exterior_cam_serial: "339322074423" # exterior camera serial number 243322071821 339322074423
+    exterior_cam_serial: "243322071821" # exterior camera serial number 243322071821 339322074423
     width: 424 # 640 424
     height: 240 # 360 240
 
@@ -59,14 +63,17 @@ record:
     push_to_hub: False # whether to push the dataset to your huggingface repo after recording
 
 replay:
-  dataset_name: physbrain3/pick_and_place_merged
-  episode_idx: 78 # episode index to replay
+  dataset_name: physbrain100/pick_and_place_from_cluster_20260128_v02
+  episode_idx: 0 # episode index to replay
   robot:
     ip: *ip
     # gripper_port: *gripper_port
+  control_mode: *control_mode 
 
 visualize:
   dataset_name: physbrain3/pick_and_place_merged
-  episode_index: 4 # episode index to visualize
+  episode_index: 23 # episode index to visualize
+
+
 
 
