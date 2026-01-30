@@ -36,8 +36,6 @@ class Franka(Robot):
         self._gripper_position = 1
         self._dt = 0.002
         self._last_gripper_position = 1
-
-        self.iteration = 0
         
     def connect(self) -> None:
         if self.is_connected:
@@ -198,15 +196,9 @@ class Franka(Robot):
     def send_action(self, action: dict[str, Any]) -> dict[str, Any]:
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
-        self.iteration += 1
         if self.config.control_mode == "isoteleop":
             # print("using control mode: ", self.config.control_mode)
             target_joints = np.array([action[f"joint_{i+1}.pos"] for i in range(self._num_joints)])
-            noise_amplitude = 0.008 if self.iteration % 2 == 0 else 0.0
-            if noise_amplitude > 0:
-            # 生成均匀分布的随机噪声 [-amplitude, +amplitude]
-                joint_noise = np.random.uniform(-noise_amplitude, noise_amplitude, self._num_joints)
-                target_joints += joint_noise
             if not self.config.debug:
                 # 获取当前关节位置
                 joint_positions = self._robot.robot_get_joint_positions()
