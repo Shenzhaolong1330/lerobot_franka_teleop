@@ -1,0 +1,41 @@
+train:
+  dataset:
+    repo_id: "physbrain3/pick_and_place_merged"
+  # 指向包含数据集 repo 的本地目录（要包含 repo_id 子目录），
+  # 例如本地缓存路径下的 physbrain3/pick_and_place_merged
+    root: "/home/deepcybo/.cache/huggingface/lerobot/physbrain3/pick_and_place_merged"
+
+  env:
+
+  policy:
+    type: "act"
+    device: "cuda"
+    repo_id: "shenzhaolong/act_policy"
+
+  output_dir: "outputs/train/act_your_dataset "
+  job_name: "act_policy"
+
+  resume: False
+  seed: 1000
+  # Number of workers for the dataloader.
+  num_workers: 4
+  batch_size: 8
+  steps: 100_000
+  eval_freq: 20_000
+  log_freq: 200
+  save_checkpoint: True
+  # Checkpoint is saved every `save_freq` training iterations and after the last training step.
+  save_freq: 20_000
+  use_policy_training_preset: True
+
+  eval: 
+    n_episodes: 10
+    batch_size: 8
+
+  wandb: 
+    enable: True
+    project: "lerobot"
+    # entity: "your-wandb-username"  # 改为您的 WandB 用户名，或注释掉使用默认
+    # notes: "训练备注"
+    # run_id: "自定义运行ID"
+    mode: "online"  # Allowed values: 'online', 'offline' 'disabled'. Defaults to 'online"

@@ -72,7 +72,7 @@ replay:
 
 visualize:
   dataset_name: physbrain3/pick_and_place_merged
-  episode_index: 23 # episode index to visualize
+  episode_index: 2 # episode index to visualize
 
 
 
