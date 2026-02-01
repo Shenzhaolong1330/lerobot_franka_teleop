@@ -20,6 +20,7 @@ from lerobot.utils.control_utils import sanity_check_dataset_robot_compatibility
 from lerobot.configs.policies import PreTrainedConfig
 from lerobot.policies.factory import make_policy, make_pre_post_processors
 from lerobot.processor.rename_processor import rename_stats
+from dataclasses import field
 
 import logging
 
@@ -44,6 +45,7 @@ class RecordConfig:
         self.dataset_path: str = HF_LEROBOT_HOME / self.repo_id
         self.user_info: str = cfg.get("user_notes", None)
         self.run_mode: str = cfg.get("run_mode", "run_record")
+        self.rename_map: dict[str, str] = field(default_factory=dict)
 
         # teleop config
         if teleop["control_mode"] == "isoteleop":
@@ -67,7 +69,6 @@ class RecordConfig:
             from lerobot.policies import ACTConfig
             self.policy = ACTConfig(
                 device = policy["device"],
-                repo_id = policy["repo_id"],
                 push_to_hub = policy["push_to_hub"],
                 # pretrained_path = policy["pretrained_path"]
             )
@@ -75,14 +76,13 @@ class RecordConfig:
             from lerobot.policies import DiffusionConfig
             self.policy = DiffusionConfig(
                 device = policy["device"],
-                repo_id = policy["repo_id"],
-                push_to_hub = ["push_to_hub"],
+                push_to_hub = policy["push_to_hub"],
                 # pretrained_path = policy["pretrained_path"]
             )
         else:
             raise ValueError(f"no config for policy type: {policy_type}")
         if policy["pretrained_path"]:
-            self.policy = PreTrainedConfig.from_pretrained(policy["pretrained_path"])
+            # self.policy = PreTrainedConfig.from_pretrained(policy["pretrained_path"])
             self.policy.pretrained_path = policy["pretrained_path"]
 
         # robot config
@@ -256,10 +256,10 @@ def run_record(record_cfg: RecordConfig):
             preprocessor, postprocessor = make_pre_post_processors(
                 policy_cfg=record_cfg.policy,
                 pretrained_path=record_cfg.policy.pretrained_path,
-                dataset_stats=rename_stats(dataset.meta.stats, record_cfg.dataset.rename_map),
+                dataset_stats=rename_stats(dataset.meta.stats, {}),  # 使用空字典作为rename_map
                 preprocessor_overrides={
                     "device_processor": {"device": record_cfg.policy.device},
-                    "rename_observations_processor": {"rename_map": record_cfg.dataset.rename_map},
+                    "rename_observations_processor": {"rename_map": {}},  # 使用空字典作为rename_map
                 },
             )
 

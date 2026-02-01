@@ -7,7 +7,7 @@ record:
   user_notes:  # any additional notes about the dataset
   fps: 15 # dataset and camera frame rate
   control_mode: &control_mode "isoteleop" # "isoteleop" or "spacemouse"
-  run_mode: "run_record" # "run_record" or "run_policy" or "run_mix"
+  run_mode: "run_policy" # "run_record" or "run_policy" or "run_mix"
 
   teleop:
     control_mode: *control_mode 
@@ -45,7 +45,7 @@ record:
     type: "act"  # 策略类型 (act, diffusion等)
     device: "cuda"  # 运行设备 (cuda, cpu)
     push_to_hub: False  # 禁用模型推送
-    pretrained_path: "outputs/train/test1/checkpoints/001000/pretrained_model"  
+    pretrained_path: "/home/deepcybo/lerobot/franka_workspace/outputs/train/test2/checkpoints/001000/pretrained_model"  
     # 预训练模型路径下要包括config.json
 
   task:
