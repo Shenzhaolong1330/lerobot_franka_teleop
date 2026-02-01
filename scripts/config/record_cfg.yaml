@@ -7,7 +7,7 @@ record:
   user_notes:  # any additional notes about the dataset
   fps: 15 # dataset and camera frame rate
   control_mode: &control_mode "isoteleop" # "isoteleop" or "spacemouse"
-  run_mode: "run_record" # "run_record" or "run_policy"
+  run_mode: "run_record" # "run_record" or "run_policy" or "run_mix"
 
   teleop:
     control_mode: *control_mode 

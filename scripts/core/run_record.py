@@ -45,49 +45,45 @@ class RecordConfig:
         self.user_info: str = cfg.get("user_notes", None)
         self.run_mode: str = cfg.get("run_mode", "run_record")
 
-        if self.run_mode == "run_record":
-            # teleop config
-            if teleop["control_mode"] == "isoteleop":
-                self.port = dxl_cfg["port"]
-                self.use_gripper = dxl_cfg["use_gripper"]  
-                self.joint_ids = dxl_cfg["joint_ids"]
-                self.joint_offsets = dxl_cfg["joint_offsets"]
-                self.joint_signs = dxl_cfg["joint_signs"]
-                self.gripper_config = dxl_cfg["gripper_config"]
-                self.hardware_offsets = dxl_cfg["hardware_offsets"]
-                self.control_mode = teleop.get("control_mode", "isoteleop")
-            elif teleop["control_mode"] == "spacemouse":
-                self.use_gripper = sm_cfg["use_gripper"]
-                self.pose_scaler = sm_cfg["pose_scaler"]
-                self.channel_signs = sm_cfg["channel_signs"]
-                self.control_mode = teleop.get("control_mode", "spacemouse")
-        elif self.run_mode == "run_policy":
-            # policy config
-            policy_type = policy["type"]
-            if policy_type == "act":
-                from lerobot.policies import ACTConfig
-                self.policy = ACTConfig(
-                    device = policy["device"],
-                    repo_id = policy["repo_id"],
-                    push_to_hub = policy["push_to_hub"],
-                    # pretrained_path = policy["pretrained_path"]
-                )
-            elif policy_type == "diffusion":
-                from lerobot.policies import DiffusionConfig
-                self.policy = DiffusionConfig(
-                    device = policy["device"],
-                    repo_id = policy["repo_id"],
-                    push_to_hub = ["push_to_hub"],
-                    # pretrained_path = policy["pretrained_path"]
-                )
-            else:
-                self.policy = None
-                raise ValueError(f"no config for policy type: {policy_type}")
-            if policy["pretrained_path"]:
-                self.policy = PreTrainedConfig.from_pretrained(policy["pretrained_path"])
-                self.policy.pretrained_path = policy["pretrained_path"]
+        # teleop config
+        if teleop["control_mode"] == "isoteleop":
+            self.port = dxl_cfg["port"]
+            self.use_gripper = dxl_cfg["use_gripper"]  
+            self.joint_ids = dxl_cfg["joint_ids"]
+            self.joint_offsets = dxl_cfg["joint_offsets"]
+            self.joint_signs = dxl_cfg["joint_signs"]
+            self.gripper_config = dxl_cfg["gripper_config"]
+            self.hardware_offsets = dxl_cfg["hardware_offsets"]
+            self.control_mode = teleop.get("control_mode", "isoteleop")
+        elif teleop["control_mode"] == "spacemouse":
+            self.use_gripper = sm_cfg["use_gripper"]
+            self.pose_scaler = sm_cfg["pose_scaler"]
+            self.channel_signs = sm_cfg["channel_signs"]
+            self.control_mode = teleop.get("control_mode", "spacemouse")
+
+        # policy config
+        policy_type = policy["type"]
+        if policy_type == "act":
+            from lerobot.policies import ACTConfig
+            self.policy = ACTConfig(
+                device = policy["device"],
+                repo_id = policy["repo_id"],
+                push_to_hub = policy["push_to_hub"],
+                # pretrained_path = policy["pretrained_path"]
+            )
+        elif policy_type == "diffusion":
+            from lerobot.policies import DiffusionConfig
+            self.policy = DiffusionConfig(
+                device = policy["device"],
+                repo_id = policy["repo_id"],
+                push_to_hub = ["push_to_hub"],
+                # pretrained_path = policy["pretrained_path"]
+            )
         else:
-            raise ValueError(f"no config for run mode: {self.run_mode}")
+            raise ValueError(f"no config for policy type: {policy_type}")
+        if policy["pretrained_path"]:
+            self.policy = PreTrainedConfig.from_pretrained(policy["pretrained_path"])
+            self.policy.pretrained_path = policy["pretrained_path"]
 
         # robot config
         self.robot_ip: str = robot["ip"]
@@ -207,9 +203,8 @@ def run_record(record_cfg: RecordConfig):
             gripper_bin_threshold = record_cfg.gripper_bin_threshold,
             control_mode = record_cfg.control_mode,
         )
-        # Initialize the robot and teleoperator
+        # Initialize the robot
         robot = Franka(robot_config)
-        teleop = FrankaTeleop(teleop_config)
 
         # Configure the dataset features
         action_features = hw_to_dataset_features(robot.action_features, "action")
@@ -243,12 +238,21 @@ def run_record(record_cfg: RecordConfig):
 
         # Create processor
         teleop_action_processor, robot_action_processor, robot_observation_processor = make_default_processors()
-
-        # Load pretrained policy
-        policy = None if record_cfg.policy is None else make_policy(record_cfg.policy, ds_meta=dataset.meta)
         preprocessor = None
         postprocessor = None
-        if record_cfg.policy is not None:
+
+        # configure the teleop and policy
+        if record_cfg.run_mode == "run_record":
+            teleop = FrankaTeleop(teleop_config)
+            policy = None
+        elif record_cfg.run_mode == "run_policy":
+            policy = make_policy(record_cfg.policy, ds_meta=dataset.meta)
+            teleop = None
+        elif record_cfg.run_mode == "run_mix":
+            policy = make_policy(record_cfg.policy, ds_meta=dataset.meta)
+            teleop = FrankaTeleop(teleop_config)
+        
+        if policy is not None:
             preprocessor, postprocessor = make_pre_post_processors(
                 policy_cfg=record_cfg.policy,
                 pretrained_path=record_cfg.policy.pretrained_path,
@@ -322,7 +326,8 @@ def run_record(record_cfg: RecordConfig):
         # Clean up
         logging.info("Stop recording")
         robot.disconnect()
-        teleop.disconnect()
+        if teleop is not None:
+            teleop.disconnect()
         dataset.finalize()
 
         update_dataset_info(record_cfg, dataset_name, data_version)
