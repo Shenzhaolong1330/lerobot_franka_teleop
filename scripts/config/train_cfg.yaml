@@ -11,8 +11,9 @@ train:
     type: "act"
     device: "cuda"
     repo_id: "shenzhaolong/act_policy"
+    push_to_hub: false  # 禁用模型推送
 
-  output_dir: "outputs/train/act_your_dataset "
+  output_dir: "outputs/train/test3"
   job_name: "act_policy"
 
   resume: False
@@ -20,8 +21,8 @@ train:
   # Number of workers for the dataloader.
   num_workers: 4
   batch_size: 8
-  steps: 100_000
-  eval_freq: 20_000
+  steps: 100_0
+  eval_freq: 20_00
   log_freq: 200
   save_checkpoint: True
   # Checkpoint is saved every `save_freq` training iterations and after the last training step.

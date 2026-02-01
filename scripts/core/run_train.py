@@ -84,13 +84,15 @@ class TrainPipelineConfig(HubMixin):
             from lerobot.policies import ACTConfig
             self.policy = ACTConfig(
                 device = policy["device"],
-                repo_id = policy["repo_id"]
+                repo_id = policy["repo_id"],
+                push_to_hub = policy["push_to_hub"]
             )
         elif policy_type == "diffusion":
             from lerobot.policies import DiffusionConfig
             self.policy = DiffusionConfig(
                 device = policy["device"],
-                repo_id = policy["repo_id"]
+                repo_id = policy["repo_id"],
+                push_to_hub = ["push_to_hub"]
             )
         else:
             raise ValueError(f"no config for policy type: {policy_type}")
@@ -194,17 +196,75 @@ class TrainPipelineConfig(HubMixin):
         return ["policy"]
 
     def to_dict(self) -> dict:
-        # 手动将对象转换为字典，避免 draccus 序列化问题
+        """将配置对象转换为可序列化的字典"""
         result = {}
         for key, value in self.__dict__.items():
+            # 跳过私有属性
+            if key.startswith('_'):
+                continue
+                
             # 处理特殊类型的属性
-            if isinstance(value, Path):
+            if value is None:
+                result[key] = None
+            elif isinstance(value, (str, int, float, bool)):
+                result[key] = value
+            elif isinstance(value, Path):
                 result[key] = str(value)
+            elif isinstance(value, (list, tuple)):
+                result[key] = [self._serialize_item(item) for item in value]
+            elif isinstance(value, dict):
+                result[key] = {k: self._serialize_item(v) for k, v in value.items()}
             elif hasattr(value, 'to_dict'):
                 # 如果属性有 to_dict 方法，调用它
                 result[key] = value.to_dict()
             else:
-                result[key] = value
+                # 对于其他对象，使用安全的序列化方法
+                result[key] = self._serialize_item(value)
+        return result
+
+    def _serialize_item(self, item):
+        """安全地序列化单个项目"""
+        if item is None:
+            return None
+        elif isinstance(item, (str, int, float, bool)):
+            return item
+        elif isinstance(item, Path):
+            return str(item)
+        elif isinstance(item, (list, tuple)):
+            return [self._serialize_item(i) for i in item]
+        elif isinstance(item, dict):
+            return {k: self._serialize_item(v) for k, v in item.items()}
+        elif hasattr(item, 'to_dict'):
+            return item.to_dict()
+        elif hasattr(item, '__dict__'):
+            # 对于复杂对象，只序列化基本属性
+            return self._serialize_simple_object(item)
+        else:
+            # 最后手段：返回字符串表示
+            return str(item)
+    
+    def _serialize_simple_object(self, obj):
+        """安全地序列化简单对象，避免循环引用"""
+        result = {}
+        for attr_name, attr_value in obj.__dict__.items():
+            # 跳过私有属性和复杂对象
+            if attr_name.startswith('_'):
+                continue
+            
+            try:
+                # 只序列化基本类型
+                if isinstance(attr_value, (str, int, float, bool, type(None))):
+                    result[attr_name] = attr_value
+                elif isinstance(attr_value, Path):
+                    result[attr_name] = str(attr_value)
+            except:
+                # 如果序列化失败，跳过该属性
+                continue
+        
+        # 如果没有任何可序列化的属性，返回类型名称
+        if not result:
+            return f"<{obj.__class__.__name__}>"
+        
         return result
 
     def _save_pretrained(self, save_directory: Path) -> None:
