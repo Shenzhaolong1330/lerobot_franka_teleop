@@ -17,6 +17,10 @@ from scripts.utils.teleop_joint_offsets import get_start_joints, compute_joint_o
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from lerobot.datasets.utils import hw_to_dataset_features
 from lerobot.utils.control_utils import sanity_check_dataset_robot_compatibility
+from lerobot.configs.policies import PreTrainedConfig
+from lerobot.policies.factory import make_policy, make_pre_post_processors
+from lerobot.processor.rename_processor import rename_stats
+
 import logging
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -28,6 +32,7 @@ class RecordConfig:
         time = cfg["time"]
         cam = cfg["cameras"]
         robot = cfg["robot"]
+        policy = cfg["policy"]
         teleop = cfg["teleop"]
         dxl_cfg = teleop["dynamixel_config"]
         sm_cfg = teleop["spacemouse_config"]
@@ -38,22 +43,51 @@ class RecordConfig:
         self.fps: str = cfg.get("fps", 15)
         self.dataset_path: str = HF_LEROBOT_HOME / self.repo_id
         self.user_info: str = cfg.get("user_notes", None)
+        self.run_mode: str = cfg.get("run_mode", "run_record")
 
-        if teleop["control_mode"] == "isoteleop":
+        if self.run_mode == "run_record":
             # teleop config
-            self.port = dxl_cfg["port"]
-            self.use_gripper = dxl_cfg["use_gripper"]  
-            self.joint_ids = dxl_cfg["joint_ids"]
-            self.joint_offsets = dxl_cfg["joint_offsets"]
-            self.joint_signs = dxl_cfg["joint_signs"]
-            self.gripper_config = dxl_cfg["gripper_config"]
-            self.hardware_offsets = dxl_cfg["hardware_offsets"]
-            self.control_mode = teleop.get("control_mode", "isoteleop")
-        elif teleop["control_mode"] == "spacemouse":
-            self.use_gripper = sm_cfg["use_gripper"]
-            self.pose_scaler = sm_cfg["pose_scaler"]
-            self.channel_signs = sm_cfg["channel_signs"]
-            self.control_mode = teleop.get("control_mode", "spacemouse")
+            if teleop["control_mode"] == "isoteleop":
+                self.port = dxl_cfg["port"]
+                self.use_gripper = dxl_cfg["use_gripper"]  
+                self.joint_ids = dxl_cfg["joint_ids"]
+                self.joint_offsets = dxl_cfg["joint_offsets"]
+                self.joint_signs = dxl_cfg["joint_signs"]
+                self.gripper_config = dxl_cfg["gripper_config"]
+                self.hardware_offsets = dxl_cfg["hardware_offsets"]
+                self.control_mode = teleop.get("control_mode", "isoteleop")
+            elif teleop["control_mode"] == "spacemouse":
+                self.use_gripper = sm_cfg["use_gripper"]
+                self.pose_scaler = sm_cfg["pose_scaler"]
+                self.channel_signs = sm_cfg["channel_signs"]
+                self.control_mode = teleop.get("control_mode", "spacemouse")
+        elif self.run_mode == "run_policy":
+            # policy config
+            policy_type = policy["type"]
+            if policy_type == "act":
+                from lerobot.policies import ACTConfig
+                self.policy = ACTConfig(
+                    device = policy["device"],
+                    repo_id = policy["repo_id"],
+                    push_to_hub = policy["push_to_hub"],
+                    # pretrained_path = policy["pretrained_path"]
+                )
+            elif policy_type == "diffusion":
+                from lerobot.policies import DiffusionConfig
+                self.policy = DiffusionConfig(
+                    device = policy["device"],
+                    repo_id = policy["repo_id"],
+                    push_to_hub = ["push_to_hub"],
+                    # pretrained_path = policy["pretrained_path"]
+                )
+            else:
+                self.policy = None
+                raise ValueError(f"no config for policy type: {policy_type}")
+            if policy["pretrained_path"]:
+                self.policy = PreTrainedConfig.from_pretrained(policy["pretrained_path"])
+                self.policy.pretrained_path = policy["pretrained_path"]
+        else:
+            raise ValueError(f"no config for run mode: {self.run_mode}")
 
         # robot config
         self.robot_ip: str = robot["ip"]
@@ -210,8 +244,24 @@ def run_record(record_cfg: RecordConfig):
         # Create processor
         teleop_action_processor, robot_action_processor, robot_observation_processor = make_default_processors()
 
+        # Load pretrained policy
+        policy = None if record_cfg.policy is None else make_policy(record_cfg.policy, ds_meta=dataset.meta)
+        preprocessor = None
+        postprocessor = None
+        if record_cfg.policy is not None:
+            preprocessor, postprocessor = make_pre_post_processors(
+                policy_cfg=record_cfg.policy,
+                pretrained_path=record_cfg.policy.pretrained_path,
+                dataset_stats=rename_stats(dataset.meta.stats, record_cfg.dataset.rename_map),
+                preprocessor_overrides={
+                    "device_processor": {"device": record_cfg.policy.device},
+                    "rename_observations_processor": {"rename_map": record_cfg.dataset.rename_map},
+                },
+            )
+
         robot.connect()
-        teleop.connect()
+        if teleop is not None:
+            teleop.connect()
 
         episode_idx = 0
 
@@ -222,6 +272,9 @@ def run_record(record_cfg: RecordConfig):
                 events=events,
                 fps=record_cfg.fps,
                 teleop=teleop,
+                policy=policy,
+                preprocessor=preprocessor,
+                postprocessor=postprocessor,
                 teleop_action_processor=teleop_action_processor,
                 robot_action_processor=robot_action_processor,
                 robot_observation_processor=robot_observation_processor,

@@ -7,6 +7,7 @@ record:
   user_notes:  # any additional notes about the dataset
   fps: 15 # dataset and camera frame rate
   control_mode: &control_mode "isoteleop" # "isoteleop" or "spacemouse"
+  run_mode: "run_record" # "run_record" or "run_policy"
 
   teleop:
     control_mode: *control_mode 
@@ -39,6 +40,13 @@ record:
     # gripper_port: &gripper_port "/dev/franka_left_gripper" # gripper_port
     gripper_reverse: False  # If gripper moves opposite, flip this value
     gripper_max_open: 0.0801 # gripper max open width in meters
+
+  policy:
+    type: "act"  # 策略类型 (act, diffusion等)
+    device: "cuda"  # 运行设备 (cuda, cpu)
+    push_to_hub: False  # 禁用模型推送
+    pretrained_path: "outputs/train/test1/checkpoints/001000/pretrained_model"  
+    # 预训练模型路径下要包括config.json
 
   task:
     # description: "Pick up the green cube and put it into the trash bin." # task description
