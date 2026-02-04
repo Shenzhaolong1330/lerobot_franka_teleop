@@ -243,12 +243,15 @@ def run_record(record_cfg: RecordConfig):
 
         # configure the teleop and policy
         if record_cfg.run_mode == "run_record":
+            logging.info("====== [INFO] Running in teleoperation mode ======")
             teleop = FrankaTeleop(teleop_config)
             policy = None
         elif record_cfg.run_mode == "run_policy":
+            logging.info("====== [INFO] Running in policy mode ======")
             policy = make_policy(record_cfg.policy, ds_meta=dataset.meta)
             teleop = None
         elif record_cfg.run_mode == "run_mix":
+            logging.info("====== [INFO] Running in mixed mode ======")
             policy = make_policy(record_cfg.policy, ds_meta=dataset.meta)
             teleop = FrankaTeleop(teleop_config)
         
