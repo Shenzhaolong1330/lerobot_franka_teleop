@@ -211,23 +211,23 @@ lerobot-edit-dataset
 
 ## 8. Recording Control Keys
 
-1. **Right Arrow Key**  
+- **Right Arrow Key**  
    1. Press the right arrow key: end the current episode and save the data. The program will pause.  
    2. Enter the **reset** phase: press enter key to continue (the slave arm will follow the master arm), use the master arm to return the slave arm to its initial position.  
    3. Press the right arrow key again to start recording the next episode.
 
-2. **Left Arrow Key**  
+- **Left Arrow Key**  
    - Press to restart the current episode recording (overwrite the current data).
 
-3. **Esc Key**  
+- **Esc Key**  
    - Press to exit the recording session and save all recorded episodes.
 
-4. **Ctrl+C or Exception**
+- **Ctrl+C or Exception**
    - Pressing or on exception: enters exception handling and asks whether to delete the incomplete dataset.
    - If you delete the dataset by accident, you can find it in the trash folder.
   
 ## 9. Dataset Naming and Recording Details
-### 1. Dataset Naming
+### 9.1 Dataset Naming
 <p align="center">
   <img src="assets/dataset.png" alt="dataset" width="600">
   <br>
@@ -256,7 +256,7 @@ lerobot-edit-dataset
    For example:  
    `Pick up the green cube and put it into the trash bin -> pick_greencube_into_trashbin`.
 
-### 2. Recording Instructions
+### 9.2 Recording Instructions
 1. Complete step `2. Get and configure required parameters`.
 2. Fill in the task instruction in `record_cfg.yaml` under `task.description` and set `repo_id` according to the dataset naming rules.
 3. Check and adjust other parameters in `record_cfg.yaml` to ensure correctness.
@@ -267,7 +267,7 @@ tools-check-dataset
 ```
 
 ## 10. Training and Evaluation Using Collected Datasets
-### 1. Training
+### 10.1 Training
 Config the `train_cfg.yaml` file, including the following fields:
 1. dataset_repo_id: The repository ID of the dataset to use for training.
 2. policy.type: The policy type to use for training. You can choose from `diffusion` and `act`.
@@ -281,7 +281,7 @@ Then run the following command to start training:
 franka-train
 ```
 
-### 2. Evaluation
+### 10.2 Evaluation
 To evaluate the trained policy, config the `record_cfg.yaml` file, including the following fields:
 1. run_mode: Set to `run_policy` to enable evaluation mode.
 2. policy.type: The policy type to use for evaluation. You can choose from `diffusion` and `act`. Make sure it is the same as the policy type used for training.
