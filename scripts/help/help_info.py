@@ -8,6 +8,8 @@ Core Commands:
   franka-record           Record teleoperation dataset
   franka-replay           Replay a recorded dataset
   franka-visualize        Visualize recorded dataset
+  franka-reset           Reset the robot to initial state
+  franka-train          Train a policy on the recorded dataset
 
 Utility Commands:
   utils-joint-offsets   Compute joint offsets for teleoperation
