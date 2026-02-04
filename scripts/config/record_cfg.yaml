@@ -1,5 +1,5 @@
 record:
-  repo_id: &repo_id "physbrain100/pick_and_place_from_cluster" 
+  repo_id: &repo_id "szl/pick_all_bluewcubes" 
   # repo_id: &repo_id "scylearning/pick_greencube_into_trashb
   # Suggested format: <hf_username>/<description>, description = task.description -> Verb_SourceObject_prep_TargetObject
   # e.g. Pick up the green cube and put it into the trash bin -> pick_greencube_into_trashbin
@@ -7,7 +7,7 @@ record:
   user_notes:  # any additional notes about the dataset
   fps: 15 # dataset and camera frame rate
   control_mode: &control_mode "isoteleop" # "isoteleop" or "spacemouse"
-  run_mode: "run_policy" # "run_record" or "run_policy" or "run_mix"
+  run_mode: "run_record" # "run_record" or "run_policy" or "run_mix"
 
   teleop:
     control_mode: *control_mode 
@@ -33,7 +33,6 @@ record:
   robot:
     # ip: &ip "172.16.0.2" # robot ip
     ip: &ip "192.168.110.15" # NUC ip
-
     use_gripper: *use_gripper
     close_threshold: 0.7 # threshold to determine gripper open/close
     gripper_bin_threshold: 0.98 # threshold to determine gripper is closed
@@ -42,20 +41,19 @@ record:
     gripper_max_open: 0.0801 # gripper max open width in meters
 
   policy:
-    type: "act"  # 策略类型 (act, diffusion等)
+    type: "diffusion"  # 策略类型 (act, diffusion)
     device: "cuda"  # 运行设备 (cuda, cpu)
     push_to_hub: False  # 禁用模型推送
-    pretrained_path: "/home/deepcybo/lerobot/franka_workspace/outputs/train/test2/checkpoints/001000/pretrained_model"  
+    pretrained_path: "/home/deepcybo/lerobot/franka_workspace/outputs/train/diffusion_test7/checkpoints/last/pretrained_model"  
     # 预训练模型路径下要包括config.json
 
   task:
     # description: "Pick up the green cube and put it into the trash bin." # task description
-    description: "pick up the red block and put it into the gray box" # task description
-    num_episodes: 1 # number of episodes to record
+    description: "pick up all blue cubes and put them into the brown basket" # task description
+    num_episodes: 30 # number of episodes to record
     display: True # Whether to display the data during recording
     resume: false # whether to resume from an existing dataset
-    resume_dataset: physbrain6/pick_and_place_from_cluster_20260123_v01 # dataset to resume from if resume is True
-
+    resume_dataset: szl/pick_all_yellowcubes_20260203_v01 # dataset to resume from if resume is True
   time:
     episode_time_sec: 6000 # max time per episode in seconds
     reset_time_sec: 6000 # max time to reset between episodes in seconds
@@ -71,16 +69,16 @@ record:
     push_to_hub: False # whether to push the dataset to your huggingface repo after recording
 
 replay:
-  dataset_name: physbrain100/pick_and_place_from_cluster_20260128_v02
-  episode_idx: 0 # episode index to replay
+  dataset_name: shenzhaolong/pick_carrot_20260203_v01
+  episode_idx: 10 # episode index to replay
   robot:
     ip: *ip
     # gripper_port: *gripper_port
   control_mode: *control_mode 
 
 visualize:
-  dataset_name: physbrain3/pick_and_place_merged
-  episode_index: 2 # episode index to visualize
+  dataset_name: szl/pick_all_objects_complete
+  episode_index: 212 # episode index to visualize
 
 
 
