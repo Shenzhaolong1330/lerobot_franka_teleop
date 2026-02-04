@@ -209,11 +209,11 @@ class Franka(Robot):
                 # 如果最大差值超过阈值，则进行插值移动
                 if max_delta > 0.3:  # 设置一个合理的阈值
                     print("MOVING TOO FAST! SLWO DOWN!")
-                    steps = min(int(max_delta / 0.02), 100)
+                    steps = min(int(max_delta / 0.05), 100)
                     
                     for i, jnt in enumerate(np.linspace(joint_positions, target_joints, steps)):
                         self._robot.robot_update_desired_joint_positions(jnt)
-                        time.sleep(0.05)
+                        time.sleep(0.02)
                         
                 else:
                     # 直接发送目标位置
@@ -260,7 +260,7 @@ class Franka(Robot):
                     target_ee_pose = np.concatenate([target_position, target_rotvec])
                     # print("target_ee_pose:", target_ee_pose[3])
                     self._robot.robot_update_desired_ee_pose(target_ee_pose)
-                else:
+                # else:
                     pass
             
             if "gripper_cmd_bin" in action:
