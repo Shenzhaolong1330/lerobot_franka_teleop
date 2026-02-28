@@ -14,7 +14,28 @@ class OculusRobot(Robot):
     - RG (Right Grip): Must be pressed to enable action recording
     - RTr (Right Trigger): Controls gripper (0.0 = open, 1.0 = closed)
     - Right controller pose: Controls end-effector delta pose
+    
+    Coordinate Systems:
+        Oculus: X(right), Y(up), Z(backward/towards user)
+        Robot:  X(forward), Y(left), Z(up)
+    
+    Transformation matrix from Oculus to Robot:
+        robot_x =  -oculus_z   (oculus backward -> robot forward)
+        robot_y =  -oculus_x   (oculus right    -> robot left)
+        robot_z =   oculus_y   (oculus up       -> robot up)
+    
+    As a rotation matrix (applied to both position and orientation):
+        T = [[ 0,  0, -1],
+             [-1,  0,  0],
+             [ 0,  1,  0]]
     """
+
+    # Oculus -> Robot coordinate transform matrix (for position only)
+    T_OCULUS_TO_ROBOT = np.array([
+        [ 0.,  0., -1.],
+        [-1.,  0.,  0.],
+        [ 0.,  1.,  0.],
+    ])
 
     def __init__(
         self,
@@ -29,7 +50,7 @@ class OculusRobot(Robot):
         self._channel_signs = channel_signs
         self._last_gripper_position = 1.0  # 默认夹爪张开状态
         self._last_valid_action = np.zeros(7 if use_gripper else 6)
-        self._prev_pose = None  # 用于计算增量
+        self._prev_transform = None  # 上一帧的 4x4 变换矩阵
         self._reset_requested = False  # A 按钮重置请求
 
         
@@ -39,63 +60,67 @@ class OculusRobot(Robot):
         else:
             return 6
 
-    def _rotation_matrix_to_rotvec(self, rotation_matrix: np.ndarray) -> np.ndarray:
-        """Convert 3x3 rotation matrix to rotation vector (axis-angle)."""
-        rot = R.from_matrix(rotation_matrix)
-        return rot.as_rotvec()
-
     def _compute_delta_pose(self, current_transform: np.ndarray) -> np.ndarray:
         """
-        Compute delta pose from current transform.
-        Returns [delta_x, delta_y, delta_z, delta_rx, delta_ry, delta_rz]
+        Compute delta pose and map to robot coordinate system.
+        
+        Position: use matrix T_OCULUS_TO_ROBOT for transformation.
+        Rotation: compute delta rotvec in Oculus frame, then explicitly
+                  map each component to the correct robot axis.
+        
+        Oculus rotvec components (right-hand rule):
+            oculus_rx = rotation around X (right)    -> tilting hand left/right
+            oculus_ry = rotation around Y (up)       -> yaw hand left/right 
+            oculus_rz = rotation around Z (backward) -> rolling hand
+            
+        Robot axes:
+            robot_rx = roll  (around X = forward)
+            robot_ry = pitch (around Y = left)
+            robot_rz = yaw   (around Z = up)
+        
+        Mapping (follows same logic as position: oz->-rx, ox->-ry, oy->rz):
+            robot_rx (roll)  = -oculus_rz  (oculus Z-axis rotation -> robot X-axis rotation)
+            robot_ry (pitch) =  oculus_rx  (oculus X-axis rotation -> robot Y-axis rotation)
+            robot_rz (yaw)   = -oculus_ry  (oculus Y-axis rotation -> robot Z-axis rotation)
+        
+        Returns: [delta_x, delta_y, delta_z, delta_rx, delta_ry, delta_rz] in robot frame
         """
-        # Extract position (translation)
-        position = current_transform[:3, 3]
+        if self._prev_transform is None:
+            return np.zeros(6)
         
-        # Extract rotation matrix and convert to rotation vector
-        rotation_matrix = current_transform[:3, :3]
-        rotvec = self._rotation_matrix_to_rotvec(rotation_matrix)
+        # --- Position delta (in Oculus frame -> Robot frame via matrix) ---
+        oculus_delta_pos = current_transform[:3, 3] - self._prev_transform[:3, 3]
+        robot_delta_pos = self.T_OCULUS_TO_ROBOT @ oculus_delta_pos
         
-        # If we have a previous pose, compute delta
-        if self._prev_pose is not None:
-            delta_position = position - self._prev_pose[:3]
-            
-            # Compute delta rotation: delta_rot = current_rot * prev_rot^-1
-            prev_rot = R.from_rotvec(self._prev_pose[3:])
-            curr_rot = R.from_rotvec(rotvec)
-            delta_rot = curr_rot * prev_rot.inv()
-            delta_rotvec = delta_rot.as_rotvec()
-            
-            delta_pose = np.concatenate([delta_position, delta_rotvec])
-
-        else:
-            # First frame, no delta
-            delta_pose = np.zeros(6)
+        # --- Rotation delta (in Oculus frame) ---
+        current_rot = current_transform[:3, :3]
+        prev_rot = self._prev_transform[:3, :3]
+        delta_rot_oculus = current_rot @ prev_rot.T
+        oculus_delta_rotvec = R.from_matrix(delta_rot_oculus).as_rotvec()
         
-        # Update previous pose
-        self._prev_pose = np.concatenate([position, rotvec])
+        # --- Explicit axis mapping for rotation ---
+        # oculus_rotvec = [rx, ry, rz] in Oculus frame
+        oculus_rx = oculus_delta_rotvec[0]  # around Oculus X (right)
+        oculus_ry = oculus_delta_rotvec[1]  # around Oculus Y (up)
+        oculus_rz = oculus_delta_rotvec[2]  # around Oculus Z (backward)
         
-        return delta_pose
+        robot_delta_rotvec = np.array([
+            oculus_rz,  # robot roll  (around robot_x=forward) from oculus_rz (around oculus_z=backward, negate)
+            oculus_rx,  # robot pitch (around robot_y=left)    from oculus_rx (around oculus_x=right, negate for axis flip but rotation direction same)
+            oculus_ry,  # robot yaw   (around robot_z=up)      from oculus_ry (around oculus_y=up, negate for convention)
+        ])
+        
+        return np.concatenate([robot_delta_pos, robot_delta_rotvec])
 
     def get_action(self) -> np.ndarray:
         """
         Return the current robot actions including gripper control.
         
-        Only returns valid action when RG button is pressed.
-        Otherwise returns zero action (no movement).
-        Returns special reset flag when A button is pressed.
+        The delta pose is computed directly in robot coordinate system
+        using rotation matrix transformation, avoiding axis-swapping issues.
         
-        Oculus coordinate system:
-        - X: right
-        - Y: up
-        - Z: backward (towards user)
-        
-        Robot coordinate system:
-        - X: forward
-        - Y: left
-        - Z: up
-        
-        Mapping: oculus_x -> robot_y, oculus_y -> robot_z, oculus_z -> robot_x
+        Output: [delta_x, delta_y, delta_z, delta_rx, delta_ry, delta_rz, (gripper)]
+        All values are in robot frame.
         """
         transforms, buttons = self._oculus_reader.get_transformations_and_buttons()
         
@@ -113,47 +138,39 @@ class OculusRobot(Robot):
             current_transform = transforms['r']  # 4x4 transformation matrix
             
             if rg_pressed:
-                # Compute delta pose from the transform
-                delta_ee_pose = self._compute_delta_pose(current_transform)
+                # Compute delta pose already in robot frame
+                delta_robot = self._compute_delta_pose(current_transform)
                 
-                # Oculus to Robot coordinate mapping
-                # Oculus: X(right), Y(up), Z(backward)
-                # Robot:  X(forward), Y(left), Z(up)
-                # Mapping: oculus_x -> -robot_y, oculus_y -> robot_z, oculus_z -> robot_x
-                oculus_dx, oculus_dy, oculus_dz = delta_ee_pose[0], delta_ee_pose[1], delta_ee_pose[2]
-                oculus_drx, oculus_dry, oculus_drz = delta_ee_pose[3], delta_ee_pose[4], delta_ee_pose[5]
-                
-                # Apply coordinate transformation and scaling
+                # Apply scaling and channel signs
                 if len(self._pose_scaler) >= 2:
                     position_scale = self._pose_scaler[0]  
-                    orientation_scale = self._pose_scaler[1] 
+                    orientation_scale = self._pose_scaler[1]
                     
-                    # Position: map oculus axes to robot axes with signs
-                    # robot_x = -oculus_z (backward), sign from config
-                    # robot_y = -oculus_x (left/right), sign from config  
-                    # robot_z = oculus_y (up/down), sign from config
-                    action[0] = -oculus_dz * position_scale * self._channel_signs[0]  # robot_x from -oculus_z (backward)
-                    action[1] = -oculus_dx * position_scale * self._channel_signs[1]  # robot_y from -oculus_x (left)
-                    action[2] = oculus_dy * position_scale * self._channel_signs[2]   # robot_z from oculus_y (up)
+                    # Position
+                    action[0] = delta_robot[0] * position_scale * self._channel_signs[0]
+                    action[1] = delta_robot[1] * position_scale * self._channel_signs[1]
+                    action[2] = delta_robot[2] * position_scale * self._channel_signs[2]
                     
-                    # Orientation: same mapping for rotation
-                    action[3] = -oculus_drz * orientation_scale * self._channel_signs[3]  # robot_rx from -oculus_rz
-                    action[4] = -oculus_drx * orientation_scale * self._channel_signs[4]  # robot_ry from -oculus_rx
-                    action[5] = oculus_dry * orientation_scale * self._channel_signs[5]   # robot_rz from oculus_ry
+                    # Orientation
+                    action[3] = delta_robot[3] * orientation_scale * self._channel_signs[3]
+                    action[4] = delta_robot[4] * orientation_scale * self._channel_signs[4]
+                    action[5] = delta_robot[5] * orientation_scale * self._channel_signs[5]
                 else:
-                    action[:6] = delta_ee_pose
+                    action[:6] = delta_robot
                 
                 self._last_valid_action[:6] = action[:6]
+                
+                # Update previous transform
+                self._prev_transform = current_transform.copy()
             else:
-                # RG not pressed, return zero action and reset previous pose
-                self._prev_pose = None
+                # RG not pressed, return zero action and reset previous transform
+                self._prev_transform = None
         else:
             # No right controller detected
-            self._prev_pose = None
+            self._prev_transform = None
 
         # Handle gripper control with RTr (Right Trigger)
         if self._use_gripper:
-            # RTr is a tuple like (0.0,) where 0.0 = not pressed, 1.0 = fully pressed
             right_trigger = buttons.get('rightTrig', (0.0,))
             if isinstance(right_trigger, tuple) and len(right_trigger) > 0:
                 trigger_value = right_trigger[0]
