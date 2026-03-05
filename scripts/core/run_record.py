@@ -68,6 +68,7 @@ class RecordConfig:
         self.gripper_reverse: bool = robot["gripper_reverse"]
         self.gripper_bin_threshold: float = robot["gripper_bin_threshold"]
         self.gripper_max_open: float = robot.get("gripper_max_open", 0.08)
+        self.execute_mode: str = robot.get("execute_mode", "ee_pose")  # "ee_pose" or "joint"
         
         # Task config
         self.num_episodes: int = task.get("num_episodes", 1)
@@ -114,6 +115,21 @@ class RecordConfig:
             self.oculus_ip = oculus_cfg.get("ip", "192.168.110.62")
             self.pose_scaler = oculus_cfg.get("pose_scaler", [1.0, 1.0])
             self.channel_signs = oculus_cfg.get("channel_signs", [1, 1, 1, 1, 1, 1])
+            # Placo IK settings (now read from placo section)
+            placo_cfg = teleop.get("placo", {})
+            self.oculus_robot_ip = placo_cfg.get("robot_ip", "192.168.110.15")
+            self.oculus_robot_port = placo_cfg.get("robot_port", 4242)
+            urdf_path = placo_cfg.get("ik_urdf_path", "")
+            # Resolve relative urdf_path to project root (lerobot_franka_isoteleop/)
+            if urdf_path and not Path(urdf_path).is_absolute():
+                project_root = Path(__file__).resolve().parent.parent.parent  # scripts/core/ -> scripts/ -> project root
+                urdf_path = str((project_root / urdf_path).resolve())
+            self.oculus_urdf_path = urdf_path
+            self.oculus_ik_iterations = placo_cfg.get("ik_iterations", 3)
+            self.oculus_ik_pos_weight = placo_cfg.get("ik_pos_weight", 8.0)
+            self.oculus_ik_ori_weight = placo_cfg.get("ik_ori_weight", 0.5)
+            self.oculus_ik_joints_weight = placo_cfg.get("ik_joints_weight", 0.2)
+            self.oculus_ik_regularization = placo_cfg.get("ik_regularization", 1e-4)
         
         else:
             raise ValueError(f"Unsupported control mode: {self.control_mode}")
@@ -163,6 +179,14 @@ class RecordConfig:
                 ip=self.oculus_ip,
                 pose_scaler=self.pose_scaler,
                 channel_signs=self.channel_signs,
+                robot_ip=self.oculus_robot_ip,
+                robot_port=self.oculus_robot_port,
+                urdf_path=self.oculus_urdf_path,
+                ik_iterations=self.oculus_ik_iterations,
+                ik_pos_weight=self.oculus_ik_pos_weight,
+                ik_ori_weight=self.oculus_ik_ori_weight,
+                ik_joints_weight=self.oculus_ik_joints_weight,
+                ik_regularization=self.oculus_ik_regularization,
             )
         else:
             raise ValueError(f"Unsupported control mode: {self.control_mode}")
@@ -242,6 +266,7 @@ def run_record(record_cfg: RecordConfig):
             gripper_bin_threshold = record_cfg.gripper_bin_threshold,
             gripper_max_open = record_cfg.gripper_max_open,
             control_mode = record_cfg.control_mode,
+            execute_mode = record_cfg.execute_mode,
         )
         # Initialize the robot
         robot = Franka(robot_config)

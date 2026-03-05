@@ -131,25 +131,6 @@ class FrankaTeleop(Teleoperator):
             )
         logger.info("===== [TELEOP] Oculus connected successfully. =====\n")
 
-    # def _check_placo_setup(self):
-    #     # Placo Setup
-    #     self.placo_robot = placo.RobotWrapper(str(self.robot_urdf_path))
-    #     self.solver = placo.KinematicsSolver(self.placo_robot)
-    #     self.solver.dt = self.cfg.placo_dt
-    #     self.solver.mask_fbase(True)
-    #     self.solver.add_kinetic_energy_regularization_task(1e-6)
-
-    # def _init_qpos(self):
-    #     qpos_init = np.array(self._arm["left_rtde_r"].getActualQ())
-
-    #     self.placo_robot.state.q[7:13] = left_qpos_init
-    #     self.placo_robot.state.q[13:19] = right_qpos_init
-
-    #     self.target_left_q = left_qpos_init.copy()
-    #     self.target_right_q = right_qpos_init.copy()
-    #     self.left_gripper_pos = self.cfg.open_position
-    #     self.right_gripper_pos = self.cfg.open_position
-
 
     def calibrate(self) -> None:
         pass

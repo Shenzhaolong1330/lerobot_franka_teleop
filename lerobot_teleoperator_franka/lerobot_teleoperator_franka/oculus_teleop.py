@@ -39,10 +39,13 @@ class OculusTeleop(BaseTeleop):
     
     @property
     def action_features(self) -> dict:
-        """Return action features for oculus mode (delta ee pose)."""
+        """Return action features for oculus mode (delta ee pose + joint positions)."""
         features = {}
         for axis in ["x", "y", "z", "rx", "ry", "rz"]:
             features[f"delta_ee_pose.{axis}"] = float
+        # Joint positions from Placo IK (always included for oculus mode)
+        for i in range(7):
+            features[f"joint_{i+1}.pos"] = float
         features["gripper_cmd_bin"] = float
         return features
     
@@ -53,8 +56,17 @@ class OculusTeleop(BaseTeleop):
             use_gripper=self.cfg.use_gripper,
             pose_scaler=self.cfg.pose_scaler,
             channel_signs=self.cfg.channel_signs,
+            robot_ip=self.cfg.robot_ip,
+            robot_port=self.cfg.robot_port,
+            urdf_path=self.cfg.urdf_path,
+            ik_iterations=self.cfg.ik_iterations,
+            ik_pos_weight=self.cfg.ik_pos_weight,
+            ik_ori_weight=self.cfg.ik_ori_weight,
+            ik_joints_weight=self.cfg.ik_joints_weight,
+            ik_regularization=self.cfg.ik_regularization,
         )
-        logger.info(f"[TELEOP] Oculus connected at IP: {self.cfg.ip}")
+        ik_status = "enabled" if self.oculus_robot._ik_enabled else "disabled"
+        logger.info(f"[TELEOP] Oculus connected at IP: {self.cfg.ip}, IK: {ik_status}")
     
     def _disconnect_impl(self) -> None:
         """Disconnect from Oculus Quest."""

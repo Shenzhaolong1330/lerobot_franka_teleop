@@ -42,6 +42,15 @@ class OculusTeleopConfig(BaseTeleopConfig):
     ip: str = "192.168.110.62"
     pose_scaler: List[float] = field(default_factory=lambda: [1.0, 1.0])  # [position_scale, orientation_scale]
     channel_signs: List[int] = field(default_factory=lambda: [1, 1, 1, 1, 1, 1])  # [x, y, z, rx, ry, rz]
+    # Placo IK settings
+    robot_ip: str = "192.168.110.15"    # Franka robot IP for reading joint states
+    robot_port: int = 4242              # Franka zerorpc port
+    urdf_path: str = ""                 # Path to URDF file (no mesh version)
+    ik_iterations: int = 3              # Number of IK solver iterations
+    ik_pos_weight: float = 8.0          # IK position task weight
+    ik_ori_weight: float = 0.5          # IK orientation task weight
+    ik_joints_weight: float = 0.2       # IK joints anchoring task weight (7-DOF redundancy)
+    ik_regularization: float = 1e-4     # IK regularization weight
 
 
 # Legacy compatibility: FrankaTeleopConfig maps to DynamixelTeleopConfig

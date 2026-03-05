@@ -1,5 +1,5 @@
 record:
-  repo_id: &repo_id "roboticiq/pick_all_yellow_cube_to_brown_basket" 
+  repo_id: &repo_id "oculus/test" 
   # repo_id: &repo_id "scylearning/pick_greencube_into_trashb
   # Suggested format: <hf_username>/<description>, description = task.description -> Verb_SourceObject_prep_TargetObject
   # e.g. Pick up the green cube and put it into the trash bin -> pick_greencube_into_trashbin
@@ -29,12 +29,28 @@ record:
     oculus_config:
       ip: "192.168.110.62"  # Oculus Quest IP address
       use_gripper: *use_gripper
-      pose_scaler: [2.0, 1.5]  # scaler for oculus actions [position, attitude]
+      pose_scaler: [2.5, 2.0]  # scaler for oculus actions [position, attitude]
       channel_signs: [1, 1, 1, -1, -1, 1]  # signs for each axis [x, y, z, rx, ry, rz]
     placo:
       visualize_placo: False
       placo_dt: 0.01
-      robot_urdf_path: assets/franka_urdf/fr3v2_franka_hand.urdf
+      # Placo IK settings for oculus joint mode (leave ik_urdf_path empty to disable IK)
+      robot_ip: "192.168.110.15"    # Franka robot IP for reading current joint states
+      robot_port: 4242              # Franka zerorpc port
+      ik_urdf_path: "assets/franka_urdf/fr3v2_no_mesh.urdf"  # No-mesh URDF for IK solver, empty to disable
+      ik_iterations: 30              # IK 求解迭代次数，值越大精度越高但更慢（推荐 8~15）
+      # ── Placo IK 任务权重 ──────────────────────────────────────────────
+      # Placo 将 IK 分解为多个加权"soft"任务，求解器在每次迭代中按权重
+      # 优先满足高权重任务。FR3v2 是 7-DOF 冗余臂，需要在末端精度和
+      # 关节锚定之间取得平衡：
+      #   - pos_weight  较大 → 末端位置跟踪更准，但关节可能偏离当前构型
+      #   - joints_weight 较大 → 关节稳定，但末端可能跟不上（尤其前/后方向）
+      #   - ori_weight  控制姿态跟踪优先级
+      #   - regularization 防止求解器数值奇异，一般无需调整
+      ik_pos_weight: 2.0            # 末端位置跟踪权重（主要任务，建议 5~10）
+      ik_ori_weight: 3.0            # 末端姿态跟踪权重（建议 0.3~2.0）
+      ik_joints_weight: 0.2         # 关节锚定权重，解决 7-DOF 冗余（建议 0.1~1.0）
+      ik_regularization: 1.0e-4     # 正则化权重，防止数值奇异（一般不调）
       
   robot:
     # ip: &ip "172.16.0.2" # robot ip
@@ -45,6 +61,8 @@ record:
     # gripper_port: &gripper_port "/dev/franka_left_gripper" # gripper_port
     gripper_reverse: false  # If gripper moves opposite, flip this value
     gripper_max_open: 0.085 # gripper max open width in meters 0.0801 for franka hand, 0.12 for robotiq gripper
+    # Execute mode for oculus control: "ee_pose" (cartesian impedance) or "joint" (joint impedance via Placo IK)
+    execute_mode: "joint"
 
   policy:
     type: "act"  # 策略类型 (act, diffusion)
@@ -77,16 +95,16 @@ record:
     push_to_hub: False # whether to push the dataset to your huggingface repo after recording
 
 replay:
-  dataset_name: roboticiq/pick_all_yellow_cube_to_brown_basket_20260208_v01
-  episode_idx: 4 # episode index to replay
+  dataset_name: oculus/test_20260305_v11
+  episode_idx: 0 # episode index to replay
   robot:
     ip: *ip
     # gripper_port: *gripper_port
   control_mode: *control_mode 
 
 visualize:
-  dataset_name: szl/pick_red_cube_grey_box_act_20260208_v01
-  episode_index: 10 # episode index to visualize
+  dataset_name: oculus/test_20260228_v04
+  episode_index: 0 # episode index to visualize
 
 
 
