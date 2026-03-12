@@ -49,6 +49,7 @@ class OculusRobot(Robot):
         use_gripper: bool = True,
         pose_scaler: Sequence[float] = [1.0, 1.0],
         channel_signs: Sequence[int] = [1, 1, 1, 1, 1, 1],
+        enable_ik: bool = True,
         robot_ip: str = '192.168.110.15',
         robot_port: int = 4242,
         urdf_path: str = '',
@@ -82,7 +83,8 @@ class OculusRobot(Robot):
         self._ik_regularization = ik_regularization
         self._last_joint_positions = None  # 最近一次 IK 解的关节位置
 
-        if urdf_path and robot_ip:
+        # 仅在 enable_ik=True 且 urdf_path 和 robot_ip 都有效时初始化 IK
+        if enable_ik and urdf_path and robot_ip:
             self._init_placo_ik(robot_ip, robot_port, urdf_path)
 
     def _init_placo_ik(self, robot_ip: str, robot_port: int, urdf_path: str):
@@ -374,7 +376,7 @@ class OculusRobot(Robot):
         for i, axis in enumerate(axes):
             obs_dict[f"delta_ee_pose.{axis}"] = float(action["delta_ee_pose"][i])
         
-        # Joint positions from IK (always output, default to 0.0 if IK unavailable)
+        # Joint positions (always output for dataset format consistency)
         if action["joint_positions"] is not None:
             for i in range(7):
                 obs_dict[f"joint_{i+1}.pos"] = float(action["joint_positions"][i])

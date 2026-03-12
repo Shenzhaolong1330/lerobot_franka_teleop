@@ -1,32 +1,32 @@
 train:
   dataset:
-    repo_id: "szl/pick_red_cube_grey_box_act_20260208_v01"
+    repo_id: "lihao-test-0310/test_20260310_m01_cleaned"
   # 指向包含数据集 repo 的本地目录（要包含 repo_id 子目录），
   # 例如本地缓存路径下的 physbrain3/pick_and_place_merged
-    root: "/home/deepcybo/.cache/huggingface/lerobot/szl/pick_red_cube_grey_box_act_20260208_v01"
+    root: "/home/deepcybo/.cache/huggingface/lerobot/lihao-test-0310/test_20260310_m01_cleaned"
 
   env:
 
   policy:
-    type: "act"
+    type: "diffusion"
     device: "cuda"
-    repo_id: "shenzhaolong/act_policy"
+    repo_id: "shenzhaolong/diffusion_policy"
     push_to_hub: false  # 禁用模型推送
 
-  output_dir: "outputs/train/act_test9"
-  job_name: "act_policy_test9"
+  output_dir: "outputs/lihao-test-0310/diffusion_test2"
+  job_name: "diffusion_policy_test13"
 
   resume: false
   seed: 1000
   # Number of workers for the dataloader.
   num_workers: 4
   batch_size: 8
-  steps: 200_00
-  eval_freq: 20_00
-  log_freq: 200
+  steps: 100_000
+  eval_freq: 50_00
+  log_freq: 500
   save_checkpoint: True
   # Checkpoint is saved every `save_freq` training iterations and after the last training step.
-  save_freq: 50_00
+  save_freq: 10_000
   use_policy_training_preset: True
 
   eval: 

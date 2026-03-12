@@ -103,75 +103,60 @@ class Franka(Robot):
             raise DeviceNotConnectedError(f"{self.name} is not connected.")
 
         # Reset robot
-        self._robot.robot_go_home()
-        self._robot.gripper_goto(width=self.config.gripper_max_open, speed=self._gripper_speed, force=self._gripper_force, blocking=True)
+        ee_positions_reset = np.array(
+        [0.55581301, 0.00308523, 0.44111654, -2.22150303, -2.15458315, 0.00646556]
+        )
+        print(f"\nMoving ee to: {ee_positions_reset} ...\n")
+        self._robot.robot_move_to_ee_pose(pose=ee_positions_reset, time_to_go=2.0)
+        self._robot.gripper_goto(
+            width=robot_config.gripper_max_open,
+            speed=robot_config.gripper_speed,
+            force=robot_config.gripper_force,
+            blocking=True
+        )
+        # self._robot.robot_go_home()
+        # self._robot.gripper_goto(width=self.config.gripper_max_open, speed=self._gripper_speed, force=self._gripper_force, blocking=True)
         logger.info("===== [ROBOT] Robot reset successfully =====\n")
 
 
     @property
     def _motors_ft(self) -> dict[str, type]:
+        # return {
+        #     # joint positions
+        #     "joint_1.pos": float,
+        #     "joint_2.pos": float,
+        #     "joint_3.pos": float,
+        #     "joint_4.pos": float,
+        #     "joint_5.pos": float,
+        #     "joint_6.pos": float,
+        #     "joint_7.pos": float,
+        #     # gripper state
+        #     "gripper_state_norm": float, # raw position in [0,1]
+        #     "gripper_cmd_bin": float, # action command bin (0 or 1)
+        #     # joint velocities
+        #     "joint_1.vel": float,
+        #     "joint_2.vel": float,
+        #     "joint_3.vel": float,
+        #     "joint_4.vel": float,
+        #     "joint_5.vel": float,
+        #     "joint_6.vel": float,
+        #     "joint_7.vel": float,
+        #     # end effector pose
+        #     "ee_pose.x": float,
+        #     "ee_pose.y": float,
+        #     "ee_pose.z": float,
+        #     "ee_pose.rx": float,
+        #     "ee_pose.ry": float,
+        #     "ee_pose.rz": float,
+        # }
         return {
-            # joint positions
-            "joint_1.pos": float,
-            "joint_2.pos": float,
-            "joint_3.pos": float,
-            "joint_4.pos": float,
-            "joint_5.pos": float,
-            "joint_6.pos": float,
-            "joint_7.pos": float,
-            # gripper state
-            "gripper_state_norm": float, # raw position in [0,1]
-            # "gripper_raw_bin": float, # raw position bin (0 or 1)
-            "gripper_cmd_bin": float, # action command bin (0 or 1)
-            # joint velocities
-            "joint_1.vel": float,
-            "joint_2.vel": float,
-            "joint_3.vel": float,
-            "joint_4.vel": float,
-            "joint_5.vel": float,
-            "joint_6.vel": float,
-            "joint_7.vel": float,
-            # # joint accelerations
-            # "joint_1.acc": float,
-            # "joint_2.acc": float,
-            # "joint_3.acc": float,       
-            # "joint_4.acc": float,
-            # "joint_5.acc": float,
-            # "joint_6.acc": float,
-            # "joint_7.acc": float,
-            # # joint forces
-            # "joint_1.force": float,
-            # "joint_2.force": float,
-            # "joint_3.force": float,
-            # "joint_4.force": float,
-            # "joint_5.force": float,
-            # "joint_6.force": float,
-            # "joint_7.force": float,
-            # end effector pose
             "ee_pose.x": float,
             "ee_pose.y": float,
             "ee_pose.z": float,
             "ee_pose.rx": float,
             "ee_pose.ry": float,
             "ee_pose.rz": float,
-            # # end effector velocity
-            # "ee_vel.x": float,
-            # "ee_vel.y": float,
-            # "ee_vel.z": float,
-            # "ee_vel.rx": float,
-            # "ee_vel.ry": float,
-            # "ee_vel.rz": float,
-            # # end effector acceleration
-            # "ee_acc.x": float,
-            # "ee_acc.y": float,
-            # "ee_acc.z": float,
-            # # end effector force and torque
-            # "ee_force.x": float,
-            # "ee_force.y": float,
-            # "ee_force.z": float,
-            # "ee_force.rx": float,
-            # "ee_force.ry": float,
-            # "ee_force.rz": float,
+            "gripper_state_norm": float, # raw position in [0,1]
         }
 
     @property
@@ -189,10 +174,11 @@ class Franka(Robot):
             # Delta EE pose (always present)
             for axis in ["x", "y", "z", "rx", "ry", "rz"]:
                 features[f"delta_ee_pose.{axis}"] = float
+
             # Joint positions from IK (oculus mode with Placo)
-            if self.config.control_mode == "oculus":
-                for i in range(self._num_joints):
-                    features[f"joint_{i+1}.pos"] = float
+            # if self.config.control_mode == "oculus":
+            #     for i in range(self._num_joints):
+            #         features[f"joint_{i+1}.pos"] = float
             if self.config.use_gripper:
                 features["gripper_cmd_bin"] = float
             return features

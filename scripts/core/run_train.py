@@ -472,6 +472,18 @@ def run_train(cfg: TrainPipelineConfig, accelerator: Accelerator | None = None):
         ds_meta=dataset.meta,
     )
 
+    print("=== 策略输入特征 (状态量) ===")
+    for key, value in policy.config.input_features.items():
+        print(f'{key}: {value}')
+
+    print("\n=== 策略输出特征 (动作) ===")
+    for key, value in policy.config.output_features.items():
+        print(f'{key}: {value}')
+
+    print("\n=== 策略配置 ===")
+    print(f"类型: {policy.config.type}")
+    print(f"设备: {policy.config.device}")
+
     # Wait for all processes to finish policy creation before continuing
     accelerator.wait_for_everyone()
 

@@ -43,7 +43,8 @@ class OculusTeleop(BaseTeleop):
         features = {}
         for axis in ["x", "y", "z", "rx", "ry", "rz"]:
             features[f"delta_ee_pose.{axis}"] = float
-        # Joint positions from Placo IK (always included for oculus mode)
+            
+        # Joint positions (always included for dataset format consistency)
         for i in range(7):
             features[f"joint_{i+1}.pos"] = float
         features["gripper_cmd_bin"] = float
@@ -56,6 +57,7 @@ class OculusTeleop(BaseTeleop):
             use_gripper=self.cfg.use_gripper,
             pose_scaler=self.cfg.pose_scaler,
             channel_signs=self.cfg.channel_signs,
+            enable_ik=self.cfg.enable_ik,
             robot_ip=self.cfg.robot_ip,
             robot_port=self.cfg.robot_port,
             urdf_path=self.cfg.urdf_path,

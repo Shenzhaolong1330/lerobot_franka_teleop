@@ -43,6 +43,7 @@ class OculusTeleopConfig(BaseTeleopConfig):
     pose_scaler: List[float] = field(default_factory=lambda: [1.0, 1.0])  # [position_scale, orientation_scale]
     channel_signs: List[int] = field(default_factory=lambda: [1, 1, 1, 1, 1, 1])  # [x, y, z, rx, ry, rz]
     # Placo IK settings
+    enable_ik: bool = True              # Whether to enable IK computation for joint positions
     robot_ip: str = "192.168.110.15"    # Franka robot IP for reading joint states
     robot_port: int = 4242              # Franka zerorpc port
     urdf_path: str = ""                 # Path to URDF file (no mesh version)

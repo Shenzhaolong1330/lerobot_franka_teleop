@@ -125,6 +125,7 @@ class RecordConfig:
                 project_root = Path(__file__).resolve().parent.parent.parent  # scripts/core/ -> scripts/ -> project root
                 urdf_path = str((project_root / urdf_path).resolve())
             self.oculus_urdf_path = urdf_path
+            self.oculus_enable_ik = placo_cfg.get("enable_ik", True)
             self.oculus_ik_iterations = placo_cfg.get("ik_iterations", 3)
             self.oculus_ik_pos_weight = placo_cfg.get("ik_pos_weight", 8.0)
             self.oculus_ik_ori_weight = placo_cfg.get("ik_ori_weight", 0.5)
@@ -179,6 +180,7 @@ class RecordConfig:
                 ip=self.oculus_ip,
                 pose_scaler=self.pose_scaler,
                 channel_signs=self.channel_signs,
+                enable_ik=self.oculus_enable_ik,
                 robot_ip=self.oculus_robot_ip,
                 robot_port=self.oculus_robot_port,
                 urdf_path=self.oculus_urdf_path,
