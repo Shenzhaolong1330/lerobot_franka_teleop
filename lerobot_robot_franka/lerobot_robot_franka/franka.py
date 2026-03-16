@@ -121,43 +121,43 @@ class Franka(Robot):
 
     @property
     def _motors_ft(self) -> dict[str, type]:
-        # return {
-        #     # joint positions
-        #     "joint_1.pos": float,
-        #     "joint_2.pos": float,
-        #     "joint_3.pos": float,
-        #     "joint_4.pos": float,
-        #     "joint_5.pos": float,
-        #     "joint_6.pos": float,
-        #     "joint_7.pos": float,
-        #     # gripper state
-        #     "gripper_state_norm": float, # raw position in [0,1]
-        #     "gripper_cmd_bin": float, # action command bin (0 or 1)
-        #     # joint velocities
-        #     "joint_1.vel": float,
-        #     "joint_2.vel": float,
-        #     "joint_3.vel": float,
-        #     "joint_4.vel": float,
-        #     "joint_5.vel": float,
-        #     "joint_6.vel": float,
-        #     "joint_7.vel": float,
-        #     # end effector pose
-        #     "ee_pose.x": float,
-        #     "ee_pose.y": float,
-        #     "ee_pose.z": float,
-        #     "ee_pose.rx": float,
-        #     "ee_pose.ry": float,
-        #     "ee_pose.rz": float,
-        # }
         return {
+            # joint positions
+            "joint_1.pos": float,
+            "joint_2.pos": float,
+            "joint_3.pos": float,
+            "joint_4.pos": float,
+            "joint_5.pos": float,
+            "joint_6.pos": float,
+            "joint_7.pos": float,
+            # gripper state
+            "gripper_state_norm": float, # raw position in [0,1]
+            "gripper_cmd_bin": float, # action command bin (0 or 1)
+            # # joint velocities
+            # "joint_1.vel": float,
+            # "joint_2.vel": float,
+            # "joint_3.vel": float,
+            # "joint_4.vel": float,
+            # "joint_5.vel": float,
+            # "joint_6.vel": float,
+            # "joint_7.vel": float,
+            # end effector pose
             "ee_pose.x": float,
             "ee_pose.y": float,
             "ee_pose.z": float,
             "ee_pose.rx": float,
             "ee_pose.ry": float,
             "ee_pose.rz": float,
-            "gripper_state_norm": float, # raw position in [0,1]
         }
+        # return {
+        #     "ee_pose.x": float,
+        #     "ee_pose.y": float,
+        #     "ee_pose.z": float,
+        #     "ee_pose.rx": float,
+        #     "ee_pose.ry": float,
+        #     "ee_pose.rz": float,
+        #     "gripper_state_norm": float, # raw position in [0,1]
+        # }
 
     @property
     def action_features(self) -> dict[str, type]:
@@ -435,7 +435,7 @@ class Franka(Robot):
             # Read joint positions
             joint_position = self._robot.robot_get_joint_positions()
             # Read joint velocities
-            joint_velocity = self._robot.robot_get_joint_velocities()
+            # joint_velocity = self._robot.robot_get_joint_velocities()
             # Read end effector pose
             ee_pose = self._robot.robot_get_ee_pose()
         except Exception as e:
@@ -450,7 +450,7 @@ class Franka(Robot):
         obs_dict = {}
         for i in range(len(joint_position)):
             obs_dict[f"joint_{i+1}.pos"] = float(joint_position[i])
-            obs_dict[f"joint_{i+1}.vel"] = float(joint_velocity[i])
+            # obs_dict[f"joint_{i+1}.vel"] = float(joint_velocity[i])
 
         for i, axis in enumerate(["x", "y", "z", "rx", "ry", "rz"]):
             obs_dict[f"ee_pose.{axis}"] = float(ee_pose[i])
