@@ -170,6 +170,18 @@ Copy the resulting `joint_offsets` into the corresponding fields in `record_cfg.
 
 If you plan to use Oculus Quest for teleoperation, follow these steps to set up the device:
 
+#### 2.5.0 Clone Oculus Reader
+```bash
+cd lerobot_franka_isoteleop/lerobot_teleoperator_franka/lerobot_teleoperator_franka/oculus
+git clone https://github.com/rail-berkeley/oculus_reader.git
+pip install -e oculus_reader
+```
+after pip, you can run 
+```bash
+python lerobot_franka_isoteleop/lerobot_teleoperator_franka/lerobot_teleoperator_franka/oculus/oculus_reader/oculus_reader/reader.py
+```
+to test the Oculus Reader.
+
 #### 2.5.1 Install ADB (Android Debug Bridge)
 
 ADB is required for communication between Oculus Quest and the computer.
