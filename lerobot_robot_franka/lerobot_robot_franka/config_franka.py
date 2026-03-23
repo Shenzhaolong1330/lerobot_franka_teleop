@@ -17,5 +17,5 @@ class FrankaConfig(RobotConfig):
     cameras: dict[str, CameraConfig] = field(default_factory=dict)
     control_mode: str = "isoteleop"
     # Execute mode for oculus: "ee_pose" (cartesian impedance) or "joint" (joint impedance via IK)
-    execute_mode: str = "joint"
+    execute_mode: str = "ee_pose"
 

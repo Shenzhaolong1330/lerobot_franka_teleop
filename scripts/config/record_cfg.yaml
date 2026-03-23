@@ -1,5 +1,6 @@
 record:
-  repo_id: &repo_id "lihao-test-0310/test" 
+  repo_id: &repo_id "babycare/milk_power_2" 
+  # repo_id: &repo_id "PhysBrain/PnP_Veg" 
   # repo_id: &repo_id "scylearning/pick_greencube_into_trashb
   # Suggested format: <hf_username>/<description>, description = task.description -> Verb_SourceObject_prep_TargetObject
   # e.g. Pick up the green cube and put it into the trash bin -> pick_greencube_into_trashbin
@@ -7,7 +8,7 @@ record:
   user_notes:  # any additional notes about the dataset
   fps: 15 # dataset and camera frame rate
   control_mode: &control_mode "oculus" # "isoteleop" or "spacemouse" or "oculus"
-  run_mode: "run_policy" # "run_record" or "run_policy" or "run_mix"
+  run_mode: "run_record" # "run_record" or "run_policy" or "run_mix"
 
   teleop:
     control_mode: *control_mode 
@@ -18,7 +19,7 @@ record:
       use_gripper: &use_gripper True # whether the slave robot can use gripper
       joint_ids: [0, 1, 2, 3, 4, 5, 6]
       # joint_offsets: [6.283, 3.142, 0.0, 4.712, 4.712, 6.283, 2.496] # franka hand offsets
-      joint_offsets: [0.0, 3.142, 6.283, 4.712, 4.712, 6.283, 3.0] # robotiq hand offsets
+      joint_offsets: [6.283, 3.142, -6.283, 4.712, -1.571, 6.283, 3.0] # robotiq hand offsets
       joint_signs: [1, 1, 1, 1, 1, -1, 1]
       gripper_config: [7, 0.9664079, 1.9404857] # id, min, max
     spacemouse_config:
@@ -29,8 +30,9 @@ record:
     oculus_config:
       ip: "192.168.110.62"  # Oculus Quest IP address
       use_gripper: *use_gripper
-      pose_scaler: [2.5, 2.0]  # scaler for oculus actions [position, attitude]
+      pose_scaler: [3.0, 2.0]  # scaler for oculus actions [position, attitude]
       channel_signs: [1, 1, 1, -1, -1, 1]  # signs for each axis [x, y, z, rx, ry, rz]
+      # channel_signs: [-1, -1, 1, 1, 1, 1] # mirror
     placo:
       visualize_placo: False
       placo_dt: 0.01
@@ -70,14 +72,14 @@ record:
     device: "cuda"  # 运行设备 (cuda, cpu)
     push_to_hub: False  # 禁用模型推送
     # pretrained_path: "/home/deepcybo/lerobot/franka_workspace/outputs/lihao-test-0310/diffusion_test1/checkpoints/last/pretrained_model"
-    pretrained_path: "/home/deepcybo/lerobot/franka_workspace/outputs/lihao-test-0310/test_66/checkpoints/last/pretrained_model"
+    pretrained_path: "/home/deepcybo/lerobot/franka_workspace/outputs/zhonghuai/lajiao_20260318_merged/act_test2/checkpoints/last/pretrained_model"
     # pretrained_path: "/home/deepcybo/lerobot/franka_workspace/outputs/lihao-test/act_test3/checkpoints/020000/pretrained_model"  
     # 预训练模型路径下要包括config.json
 
   task:
     # description: "Pick up the green cube and put it into the trash bin." # task description
-    # description: "pick up all blue cubes and put them into the brown basket" # task description
-    description: "pick up all yellow cubes and put them into the brown basket" # task description
+    description: "pick up the Shanghai Green and put them into the brown basket" # task description
+    # description: "pick up the red chili and put it into the brown basket" # task description
     # description: "pick up the red chili and put it into the brown basket"
     num_episodes: 10 # number of episodes to record
     display: True # Whether to display the data during recording
@@ -99,7 +101,7 @@ record:
     push_to_hub: False # whether to push the dataset to your huggingface repo after recording
 
 replay:
-  dataset_name: lihao-test/test_20260306_v09
+  dataset_name: babycare/milk_power_20260321_v03
   episode_idx: 0 # episode index to replay
   robot:
     ip: *ip
@@ -107,8 +109,8 @@ replay:
   control_mode: *control_mode 
 
 visualize:
-  dataset_name: lihao-test/test_20260306_v01
-  episode_index: 6 # episode index to visualize
+  dataset_name: babycare/milk_power_20260321_v03
+  episode_index: 0 # episode index to visualize
 
 
 
