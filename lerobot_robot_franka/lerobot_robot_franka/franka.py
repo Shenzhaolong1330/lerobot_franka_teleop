@@ -14,6 +14,10 @@ import numpy as np
 from lerobot.cameras.configs import ColorMode, Cv2Rotation
 from lerobot.cameras.realsense.camera_realsense import RealSenseCameraConfig
 
+HOME_JOINT_POSITION = np.array(
+    [1.58472168, -1.56486702, -1.74356186, -2.634835, -0.11180906, 4.2022109, -1.51133597]
+)
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 class Franka(Robot):
@@ -103,18 +107,27 @@ class Franka(Robot):
             raise DeviceNotConnectedError(f"{self.name} is not connected.")
 
         # Reset robot
-        ee_positions_reset = np.array(
-        [0.55581301, 0.00308523, 0.44111654, -2.22150303, -2.15458315, 0.00646556]
-        )
-        print(f"\nMoving ee to: {ee_positions_reset} ...\n")
-        self._robot.robot_move_to_ee_pose(pose=ee_positions_reset, time_to_go=2.0)
+        # ee_positions_reset = np.array(
+        # [0.40581301, 0.0, 0.44111654, -2.22150303, -2.15458315, 0.0]
+        # )
+        # print(f"\nMoving ee to: {ee_positions_reset} ...\n")
+        # self._robot.robot_move_to_ee_pose(pose=ee_positions_reset, time_to_go=2.0)
+        # self._robot.gripper_goto(
+        #     width=robot_config.gripper_max_open,
+        #     speed=robot_config.gripper_speed,
+        #     force=robot_config.gripper_force,
+        #     blocking=True
+        # )
+
+        # joint_positions = np.array([1.58472168, -1.56486702, -1.74356186, -2.634835, -0.11180906, 4.2022109, -1.51133597])
+        print(f"\nMoving joint positions to: {HOME_JOINT_POSITION} ...\n")
+        self._robot.robot_move_to_joint_positions(positions = HOME_JOINT_POSITION, time_to_go=5.0)
         self._robot.gripper_goto(
-            width=robot_config.gripper_max_open,
-            speed=robot_config.gripper_speed,
-            force=robot_config.gripper_force,
+            width=self.config.gripper_max_open,
+            speed=self._gripper_speed,
+            force=self._gripper_force,
             blocking=True
         )
-        # self._robot.robot_go_home()
         # self._robot.gripper_goto(width=self.config.gripper_max_open, speed=self._gripper_speed, force=self._gripper_force, blocking=True)
         logger.info("===== [ROBOT] Robot reset successfully =====\n")
 
@@ -266,10 +279,17 @@ class Franka(Robot):
         if action.get("reset_requested", False):
             logger.info("[ROBOT] Reset requested, moving to home position...")
             try:
-                ee_positions_reset= np.array(
-                    [0.55581301, 0.00308523, 0.44111654, -2.22150303, -2.15458315, 0.00646556]
-                )
-                self._robot.robot_move_to_ee_pose(pose = ee_positions_reset, time_to_go=2.0)
+                # ee_positions_reset= np.array(
+                #     [0.55581301, 0.00308523, 0.44111654, -2.22150303, -2.15458315, 0.00646556]
+                # )
+                # self._robot.robot_move_to_ee_pose(pose = ee_positions_reset, time_to_go=2.0)
+                # self._robot.gripper_goto(
+                #     width=self.config.gripper_max_open,
+                #     speed=self._gripper_speed,
+                #     force=self._gripper_force,
+                #     blocking=True
+                # )
+                self._robot.robot_move_to_joint_positions(positions = HOME_JOINT_POSITION, time_to_go=5.0)
                 self._robot.gripper_goto(
                     width=self.config.gripper_max_open,
                     speed=self._gripper_speed,
